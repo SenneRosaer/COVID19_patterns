@@ -1,5 +1,6 @@
 import numpy as np
 import pandas as pd
+from efficient_apriori import apriori
 import csv
 
 def create_dataframe():
@@ -43,4 +44,13 @@ def create_dataframe():
 
 if __name__ == '__main__':
     df = create_dataframe()
-    print(df)
+    tmp = list(df['DNA'])
+    transactions = []
+    for item in tmp:
+        tmp_trans = []
+        for n in range(3,8):
+            chunks = [item[i:i+n] for i in range(0, len(item), n)]
+            tmp_trans += chunks
+        transactions.append(tmp_trans)
+
+    result = apriori(transactions)
