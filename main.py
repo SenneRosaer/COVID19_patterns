@@ -42,15 +42,26 @@ def create_dataframe():
     del df["Nuc_Completeness"]
     return df
 
+class DNA():
+    def __init__(self, dna):
+        self.dna = dna
+
+    def __str__(self):
+        return self.dna
+
 if __name__ == '__main__':
     df = create_dataframe()
-    tmp = list(df['DNA'])
-    transactions = []
-    for item in tmp:
-        tmp_trans = []
-        for n in range(3,8):
-            chunks = [item[i:i+n] for i in range(0, len(item), n)]
-            tmp_trans += chunks
-        transactions.append(tmp_trans)
+    print(df)
+    dna = {}
+    for i in df['Geo_Location'].unique():
+        dna[i] = [{df['DNA'][j]: df['Collection_Date'][j]} for j in df[df['Geo_Location'] == i].index]
+     print(dna)
+    # transactions = []
+    # for item in dna:
+    #     tmp_trans = []
+    #     for n in range(3,8):
+    #         chunks = [item[i:i+n] for i in range(0, len(item), n)]
+    #         tmp_trans += chunks
+    #     transactions.append(tmp_trans)
 
-    result = apriori(transactions)
+    # result = apriori(transactions)
