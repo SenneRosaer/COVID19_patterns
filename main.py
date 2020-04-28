@@ -1,12 +1,9 @@
 import numpy as np
 import pandas as pd
 from efficient_apriori import apriori
-from  prefixspan import PrefixSpan
-import csv
-from Bio import AlignIO
+
 
 def create_dataframe():
-    pd.options.display.max_rows
     pd.set_option('display.max_rows', 500)
     pd.set_option('display.max_columns', 500)
     pd.set_option('display.width', 1000)
@@ -78,13 +75,13 @@ def _eclat(prefix, tidlist, minsup):
         return: list of itemsets with support > minsup. Format: [({item1, item2}, supp1), ({item1}, supp2)]
     """
     returnval = []
-    if prefix == []:
+    if not prefix:
         newtidlist = []
         for item, tidl in tidlist:
             if len(tidl) >= minsup:
                 returnval.append(({item}, len(tidl)))
                 newtidlist.append(({item}, tidl))
-        if returnval == []:
+        if not returnval:
             return []
         tidlist = newtidlist
 
@@ -120,8 +117,8 @@ if __name__ == '__main__':
     for item in tmp:
         item = item[:100]
         tmp_trans = []
-        for n in range (3,8):
-            chunks = [item[i:i+n] for i in range(0, len(item), n)]
+        for n in range(3, 8):
+            chunks = [item[i:i + n] for i in range(0, len(item), n)]
             tmp_trans += chunks
         transactions.append(tuple(tmp_trans))
 
@@ -132,7 +129,7 @@ if __name__ == '__main__':
         same = True
         same_val = None
         for index2 in range(len(transactions)):
-            if same_val == None:
+            if same_val is None:
                 same_val = transactions[index2][index]
             if same_val != transactions[index2][index]:
                 same = False
@@ -142,8 +139,6 @@ if __name__ == '__main__':
             for index2 in range(len(transactions)):
                 new_trans[index2].append(transactions[index2][index])
 
-
     print("done")
     result = apriori(transactions, min_support=0.55)
-    print("?")
-
+    print("?", result)
