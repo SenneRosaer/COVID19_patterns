@@ -13,23 +13,24 @@ def create_dataframe():
 
     df = pd.read_csv("sequences.csv")
 
-    file = open("sequences.fasta")
-    file = file.read().split(">")
+    file = open("MT372482.1")
+    file = file.read().replace("\n","")
+    file = file.replace("gb|","")
+    file = file.split(">")
     result = []
     for line in file:
-        if "complete genome" in line:
-            line = line.replace("complete genome", "").replace(" |", "|")
-            tmp = line.split("|")
-            tmp[2] = tmp[2].replace("\n", "")
+        tmp = line.split(".")
+        if len(tmp) > 1:
+            tmp[1] = tmp[1][1:]
             result.append(tmp)
-
-    df2 = pd.DataFrame(result, columns=["Accession", "extra_info", "DNA"])
+        else:
+            pass
+    df2 = pd.DataFrame(result, columns=["Accession", "DNA"])
     convert_dict = {'Accession': object}
     df['Accession'] = df['Accession'].astype(str)
     df2['Accession'] = df2['Accession'].astype(str)
 
     df = pd.merge(df, df2, how="right", on="Accession")
-    del df["extra_info"]
     del df["Publications"]
     del df["Authors"]
     del df["Genotype"]
@@ -61,7 +62,6 @@ def transactionsToTidlist(transactions):
             else:
                 returndict[item].add(count)
         count += 1
-    print("yet")
     return list(returndict.items())
 
 
@@ -109,15 +109,37 @@ def _eclat(prefix, tidlist, minsup):
     return returnval
 
 
+def checkSame(first,second):
+    tmp1 = list(first)
+    tmp2 = list(second)
+    if len(tmp1) != len(tmp2):
+        return False
+    else:
+        ret = False
+        for index in range(len(tmp1)):
+            if tmp1 != tmp2:
+                if tmp1 == "-" or tmp1 == "N":
+                    ret = True
+                else:
+                    ret = False
+                    break
+                if tmp2 == "-" or tmp2 == "N":
+                    ret = True
+                else:
+                    ret = False
+                    break
+            else:
+                ret = True
+        return ret
 if __name__ == '__main__':
     df = create_dataframe()
     print(df)
 
-    geo = df.loc[df.Geo_Location == 'China']
 
     tmp = list(df['DNA'])
     transactions = []
     for item in tmp:
+
         item = item[:100]
         tmp_trans = []
         for n in range (3,8):
@@ -134,7 +156,7 @@ if __name__ == '__main__':
         for index2 in range(len(transactions)):
             if same_val == None:
                 same_val = transactions[index2][index]
-            if same_val != transactions[index2][index]:
+            if checkSame(same_val,transactions[index2][index]) and transactions[index2][index] :
                 same = False
                 break
 
