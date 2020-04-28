@@ -11,8 +11,8 @@ def create_dataframe():
     df = pd.read_csv("sequences.csv")
 
     file = open("MT372482.1")
-    file = file.read().replace("\n","")
-    file = file.replace("gb|","")
+    file = file.read().replace("\n", "")
+    file = file.replace("gb|", "")
     file = file.split(">")
     result = []
     for line in file:
@@ -106,36 +106,25 @@ def _eclat(prefix, tidlist, minsup):
     return returnval
 
 
-def checkSame(first,second):
-    tmp1 = list(first)
-    tmp2 = list(second)
-    if len(tmp1) != len(tmp2):
+def checkSame(first, second):
+    first_bases = list(first)
+    second_bases = list(second)
+    if len(first_bases) != len(second_bases):
         return False
-    else:
-        ret = False
-        for index in range(len(tmp1)):
-            if tmp1[index] != tmp2[index]:
-                if tmp1[index] == "-" or tmp1[index] == "N":
-                    ret = True
-                    continue
-                else:
-                    ret = False
-
-                if tmp2[index] == "-" or tmp2[index] == "N":
-                    ret = True
-                    continue
-                else:
-                    ret = False
-
-                if not ret:
-                    break
+    for i in range(len(first_bases)):
+        if first_bases[i] != second_bases[i]:
+            if first_bases[i] == "-" or first_bases[i] == "N":
+                continue
+            elif second_bases[i] == "-" or second_bases[i] == "N":
+                continue
             else:
-                ret = True
-        return ret
+                return False
+    return True
+
+
 if __name__ == '__main__':
     df = create_dataframe()
     print(df)
-
 
     tmp = list(df['DNA'])
     transactions = []
@@ -156,7 +145,7 @@ if __name__ == '__main__':
         for index2 in range(len(transactions)):
             if same_val is None:
                 same_val = transactions[index2][index]
-            if not checkSame(same_val,transactions[index2][index]) and transactions[index2][index] :
+            if not checkSame(same_val, transactions[index2][index]) and transactions[index2][index]:
                 same = False
                 break
 
