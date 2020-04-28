@@ -1,6 +1,8 @@
 import numpy as np
 import pandas as pd
 from efficient_apriori import apriori
+import os
+import pickle
 
 
 def create_dataframe():
@@ -123,36 +125,43 @@ def checkSame(first, second):
 
 
 if __name__ == '__main__':
-    df = create_dataframe()
-    print(df)
+    if not os.path.isfile("cache.txt"):
+        df = create_dataframe()
+        print(df)
 
-    tmp = list(df['DNA'])
-    transactions = []
-    for item in tmp:
-        # item = item[:100]
-        tmp_trans = []
-        for n in range(3, 8):
-            chunks = [item[i:i + n] for i in range(0, len(item), n)]
-            tmp_trans += chunks
-        transactions.append(tuple(tmp_trans))
+        tmp = list(df['DNA'])
+        transactions = []
+        for item in tmp:
+            # item = item[:100]
+            tmp_trans = []
+            for n in range(3, 8):
+                chunks = [item[i:i + n] for i in range(0, len(item), n)]
+                tmp_trans += chunks
+            transactions.append(tuple(tmp_trans))
 
-    new_trans = []
-    for i in range(len(transactions)):
-        new_trans.append([])
-    for index in range(len(transactions[0])):
-        same = True
-        same_val = None
-        for index2 in range(len(transactions)):
-            if same_val is None:
-                same_val = transactions[index2][index]
-            if not checkSame(same_val, transactions[index2][index]) and transactions[index2][index]:
-                same = False
-                break
-
-        if not same:
+        new_trans = []
+        for i in range(len(transactions)):
+            new_trans.append([])
+        for index in range(len(transactions[0])):
+            same = True
+            same_val = None
             for index2 in range(len(transactions)):
-                new_trans[index2].append(transactions[index2][index])
+                if same_val is None:
+                    same_val = transactions[index2][index]
+                if not checkSame(same_val, transactions[index2][index]) and transactions[index2][index]:
+                    same = False
+                    break
+
+            if not same:
+                for index2 in range(len(transactions)):
+                    new_trans[index2].append(transactions[index2][index])
+
+        with open('cache.txt', 'wb') as fp:
+            pickle.dump(new_trans, fp)
+    else:
+        with open('cache.txt', 'rb') as fp:
+            new_trans = pickle.load(fp)
 
     print("done")
-    result = apriori(transactions, min_support=0.55)
+    result = apriori(new_trans, min_support=0.55)
     print("?", result)
