@@ -114,7 +114,7 @@ def checkSame(first,second):
     else:
         ret = False
         for index in range(len(tmp1)):
-            if tmp1 != tmp2:
+            if tmp1[index] != tmp2[index]:
                 if tmp1[index] == "-" or tmp1[index] == "N":
                     ret = True
                     continue
@@ -140,8 +140,7 @@ if __name__ == '__main__':
     tmp = list(df['DNA'])
     transactions = []
     for item in tmp:
-
-        item = item[:100]
+        # item = item[:100]
         tmp_trans = []
         for n in range(3, 8):
             chunks = [item[i:i + n] for i in range(0, len(item), n)]
