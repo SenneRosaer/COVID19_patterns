@@ -115,15 +115,19 @@ def checkSame(first,second):
         ret = False
         for index in range(len(tmp1)):
             if tmp1 != tmp2:
-                if tmp1 == "-" or tmp1 == "N":
+                if tmp1[index] == "-" or tmp1[index] == "N":
                     ret = True
+                    continue
                 else:
                     ret = False
-                    break
-                if tmp2 == "-" or tmp2 == "N":
+
+                if tmp2[index] == "-" or tmp2[index] == "N":
                     ret = True
+                    continue
                 else:
                     ret = False
+
+                if not ret:
                     break
             else:
                 ret = True
@@ -153,7 +157,7 @@ if __name__ == '__main__':
         for index2 in range(len(transactions)):
             if same_val is None:
                 same_val = transactions[index2][index]
-            if checkSame(same_val,transactions[index2][index]) and transactions[index2][index] :
+            if not checkSame(same_val,transactions[index2][index]) and transactions[index2][index] :
                 same = False
                 break
 
