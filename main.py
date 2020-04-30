@@ -155,11 +155,11 @@ if __name__ == '__main__':
     result = apriori2(new_trans,min_support=0.7, min_confidence=0.85,max_length=5)
     with open('test.txt', 'w') as fp:
         for freq_dict in result:
-            for key in freq_dict:
+            for key in result[freq_dict]:
                 string = ""
                 string += str(key)
-                string += ": " + freq_dict[key]
+                string += ": " + str(result[freq_dict][key]) + "\n"
                 fp.write(string)
-            fp.write("=======================")
+            fp.write("\n\n\n=======================\n\n\n\n")
 
     print("?")
