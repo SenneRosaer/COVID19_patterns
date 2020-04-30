@@ -1,6 +1,10 @@
 import numpy as np
 import pandas as pd
 from efficient_apriori import apriori
+import os
+import pickle
+
+
 def create_dataframe():
     pd.set_option('display.max_rows', 500)
     pd.set_option('display.max_columns', 500)
@@ -121,8 +125,9 @@ def checkSame(first, second):
 
 
 if __name__ == '__main__':
-    df = create_dataframe()
-    print(df)
+    if not os.path.isfile("cache.txt"):
+        df = create_dataframe()
+        print(df)
 
     tmp = list(df['DNA'])
     transactions = []
@@ -134,22 +139,28 @@ if __name__ == '__main__':
             tmp_trans += chunks
         transactions.append(tuple(tmp_trans))
 
-    new_trans = []
-    for i in range(len(transactions)):
-        new_trans.append([])
-    for index in range(len(transactions[0])):
-        same = True
-        same_val = None
-        for index2 in range(len(transactions)):
-            if same_val is None:
-                same_val = transactions[index2][index]
-            if not checkSame(same_val, transactions[index2][index]) and transactions[index2][index]:
-                same = False
-                break
+        new_trans = []
+        for i in range(len(transactions)):
+            new_trans.append([])
+        for index in range(len(transactions[0])):
+            same = True
+            same_val = None
+            for index2 in range(len(transactions)):
+                if same_val is None:
+                    same_val = transactions[index2][index]
+                if not checkSame(same_val, transactions[index2][index]) and transactions[index2][index]:
+                    same = False
+                    break
 
         if not same:
             for index2 in range(len(transactions)):
                 new_trans[index2].append((transactions[index2][index]))
+
+        with open('cache.txt', 'wb') as fp:
+            pickle.dump(new_trans, fp)
+    else:
+        with open('cache.txt', 'rb') as fp:
+            new_trans = pickle.load(fp)
 
     for index in range(len(new_trans)):
         new_trans[index] = tuple(new_trans[index])
