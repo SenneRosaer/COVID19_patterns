@@ -128,12 +128,12 @@ def write_apriori_results(transactions, file_name='test.txt'):
     result = apriori2(transactions, min_support=0.7, min_confidence=0.85, max_length=5)
     with open(file_name, 'w') as fp:
         for freq_dict in result:
-            for key in freq_dict:
+            for key in result[freq_dict]:
                 string = ""
                 string += str(key)
-                string += ": " + freq_dict[key]
+                string += ": " + str(result[freq_dict][key]) + "\n"
                 fp.write(string)
-            fp.write("=======================")
+            fp.write("\n\n\n=======================\n\n\n\n")
 
 
 def frequent_itemsets_apriori(df, cache_results=True):
