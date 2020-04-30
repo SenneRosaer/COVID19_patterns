@@ -1,6 +1,7 @@
 import numpy as np
 import pandas as pd
 from efficient_apriori import apriori
+from own_apriori import apriori2
 import os
 import pickle
 from sklearn import tree
@@ -62,71 +63,6 @@ def create_y():
     print(df)
     return df
 
-
-def transactionsToTidlist(transactions):
-    """ Converts transactions matrix to tidlist.
-        Return: List of the form [(item1, {tids1}), (item2, {tids2})]
-        (Hint: Store them in a dict d (item -> set) and return list(d.items())
-    """
-    # TODO: Implement
-    count = 0
-    returndict = dict()
-    for trans in transactions:
-        for item in trans:
-            if item not in returndict:
-                tempset = set()
-                tempset.add(count)
-                returndict[item] = tempset
-            else:
-                returndict[item].add(count)
-        count += 1
-    return list(returndict.items())
-
-
-def eclat(df, minsup):
-    tidlist = transactionsToTidlist(df)
-    return _eclat([], tidlist, minsup)
-
-
-def _eclat(prefix, tidlist, minsup):
-    """ Implement the Eclat algorithm recursively.
-        prefix: items in this depth first branch (the set alpha).
-        tidlist: tids of alpha-conditional db.
-        minsup: minimum support.
-        return: list of itemsets with support > minsup. Format: [({item1, item2}, supp1), ({item1}, supp2)]
-    """
-    returnval = []
-    if not prefix:
-        newtidlist = []
-        for item, tidl in tidlist:
-            if len(tidl) >= minsup:
-                returnval.append(({item}, len(tidl)))
-                newtidlist.append(({item}, tidl))
-        if not returnval:
-            return []
-        tidlist = newtidlist
-
-    for i in range(0, len(tidlist)):
-        n_tidlist = []
-        item = tidlist[i][0]
-        tidl = tidlist[i][1]
-        for j in range(i + 1, len(tidlist)):
-            item2 = tidlist[j][0]
-            tidl2 = tidlist[j][1]
-            tempitems = item.union(item2)
-            temptidl = tidl.intersection(tidl2)
-            if len(tempitems) == len(item) + 1:
-                if len(temptidl) >= minsup:
-                    n_tidlist.append((tempitems, temptidl))
-                    returnval.append((tempitems, len(temptidl)))
-        result_list = []
-        if len(n_tidlist) > 1:
-            result_list = _eclat([item], n_tidlist, minsup)
-        returnval = returnval + result_list
-
-    return returnval
-
-
 def checkSame(first, second):
     first_bases = list(first)
     second_bases = list(second)
@@ -185,11 +121,10 @@ if __name__ == '__main__':
 
             if not same:
                 for index2 in range(len(transactions)):
-
                     current_item = transactions[index2][index]
 
                     if frequency_dict[current_item] / len(transactions) < 0.9:
-                        new_trans[index2].append((transactions[index2][index]))
+                        new_trans[index2].append((str(index) + ":" + transactions[index2][index]))
 
         with open('cache.txt', 'wb') as fp:
             pickle.dump(new_trans, fp)
@@ -217,5 +152,14 @@ if __name__ == '__main__':
     #     file.write(tmp)
     # file.close()
 
-    result = apriori(new_trans,min_support=0.7, min_confidence=0.85,max_length=5)
-    print("?", result)
+    result = apriori2(new_trans,min_support=0.7, min_confidence=0.85,max_length=5)
+    with open('test.txt', 'w') as fp:
+        for freq_dict in result:
+            for key in freq_dict:
+                string = ""
+                string += str(key)
+                string += ": " + freq_dict[key]
+                fp.write(string)
+            fp.write("=======================")
+
+    print("?")
