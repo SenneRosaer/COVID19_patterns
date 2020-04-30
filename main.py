@@ -3,6 +3,8 @@ import pandas as pd
 from efficient_apriori import apriori
 import os
 import pickle
+from sklearn import tree
+import graphviz
 
 
 def create_dataframe():
@@ -41,6 +43,23 @@ def create_dataframe():
     del df["GenBank_Title"]
     del df["Isolation_Source"]
     del df["Nuc_Completeness"]
+    return df
+
+def create_y():
+    df = pd.read_csv("owid-covid-data.csv")
+    df = df[df.location == "China"]
+    del df["new_tests_per_thousand"]
+    del df["tests_units"]
+    del df["iso_code"]
+    del df["new_tests"]
+    del df["total_tests"]
+    del df["new_deaths_per_million"]
+    del df["total_deaths_per_million"]
+    del df["new_cases_per_million"]
+    del df["total_cases_per_million"]
+    del df["new_deaths"]
+    del df["new_cases"]
+    print(df)
     return df
 
 
@@ -125,6 +144,8 @@ def checkSame(first, second):
 
 
 if __name__ == '__main__':
+    y = create_y()
+
     if not os.path.isfile("cache.txt"):
         df = create_dataframe()
         print(df)
@@ -166,6 +187,10 @@ if __name__ == '__main__':
         new_trans[index] = tuple(new_trans[index])
     print("done")
 
+    print(new_trans)
+
+    clf = tree.DecisionTreeClassifier()
+
     ###Write to file###
     # file = open("transactions.txt", "w")
     # for trans in new_trans:
@@ -178,5 +203,5 @@ if __name__ == '__main__':
     #     file.write(tmp)
     # file.close()
 
-    result = apriori(new_trans,min_support=0.7, min_confidence=0.85,max_length=5)
+    # result = apriori(new_trans,min_support=0.7, min_confidence=0.85,max_length=5)
     print("?")
