@@ -93,11 +93,11 @@ def create_chunks(dna_list, chunk_min=3, chunk_max=8):
 
 
 def filter_transactions(transactions):
-    new_trans = [list()] * len(transactions)
+    new_trans = [list() for _ in range(len(transactions))]  # != new_trans = [list()] * len(transactions) MEM BULLSHIT
     for index1 in range(len(transactions[0])):
         is_same = True
         same_val = None
-        frequency_dict = dict()
+        frequency_dict = {}
         for index2 in range(len(transactions)):
             current = transactions[index2][index1]
             if current not in frequency_dict.keys():
@@ -149,90 +149,6 @@ def frequent_itemsets_apriori(df, cache_results=True):
 
 
 if __name__ == '__main__':
-    # y = create_y()
-    
     df = create_dataframe()
     frequent_itemsets_apriori(df)
-
-    # if not os.path.isfile("cache.txt"):
-    #     df = create_dataframe()
-    #     print(df)
-    # 
-    #     tmp = list(df['DNA'])
-    #     transactions = []
-    #     for item in tmp:
-    #         tmp_trans = []
-    #         for n in range(3, 8):
-    #             chunks = [item[i:i + n] for i in range(0, len(item), n)]
-    #             tmp_trans += chunks
-    #         transactions.append(tuple(tmp_trans))
-    # 
-    #     #####
-    # 
-    #     new_trans = []
-    #     for i in range(len(transactions)):
-    #         new_trans.append([])
-    #     for index in range(len(transactions[0])):
-    #         same = True
-    #         same_val = None
-    # 
-    #         frequency_dict = {
-    # 
-    #         }
-    # 
-    #         for index2 in range(len(transactions)):
-    #             current = transactions[index2][index]
-    #             if current not in frequency_dict.keys():
-    #                 frequency_dict[current] = 1
-    #             else:
-    #                 frequency_dict[current] += 1
-    # 
-    #             if same_val is None:
-    #                 same_val = transactions[index2][index]
-    #             if not checkSame(same_val, transactions[index2][index]) and transactions[index2][index]:
-    #                 same = False
-    # 
-    #         if not same:
-    #             for index2 in range(len(transactions)):
-    #                 current_item = transactions[index2][index]
-    # 
-    #                 if frequency_dict[current_item] / len(transactions) < 0.9:
-    #                     new_trans[index2].append((str(index) + ":" + transactions[index2][index]))
-    # 
-    #     with open('cache.txt', 'wb') as fp:
-    #         pickle.dump(new_trans, fp)
-    # else:
-    #     with open('cache.txt', 'rb') as fp:
-    #         new_trans = pickle.load(fp)
-    # 
-    # for index in range(len(new_trans)):
-    #     new_trans[index] = tuple(new_trans[index])
-    # print("done")
-    # 
-    # print(new_trans)
-    # 
-    # clf = tree.DecisionTreeClassifier()
-    # 
-    # ###Write to file###
-    # # file = open("transactions.txt", "w")
-    # # for trans in new_trans:
-    # #     tmp = ""
-    # #     for item in trans:
-    # #         tmp += item +", "
-    # #
-    # #     tmp = tmp[:-2]
-    # #     tmp += "\n"
-    # #     file.write(tmp)
-    # # file.close()
-    # 
-    # result = apriori2(new_trans, min_support=0.7, min_confidence=0.85, max_length=5)
-    # with open('test.txt', 'w') as fp:
-    #     for freq_dict in result:
-    #         for key in freq_dict:
-    #             string = ""
-    #             string += str(key)
-    #             string += ": " + freq_dict[key]
-    #             fp.write(string)
-    #         fp.write("=======================")
-
     print("?")
