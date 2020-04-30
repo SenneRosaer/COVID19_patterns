@@ -132,9 +132,9 @@ if __name__ == '__main__':
         tmp = list(df['DNA'])
         transactions = []
         for item in tmp:
-            item = item[:5835]
+            #item = item[:5835]
             tmp_trans = []
-            for n in range(3,4):
+            for n in range(3,8):
                 chunks = [item[i:i + n] for i in range(0, len(item), n)]
                 tmp_trans += chunks
             transactions.append(tuple(tmp_trans))
@@ -145,16 +145,30 @@ if __name__ == '__main__':
         for index in range(len(transactions[0])):
             same = True
             same_val = None
+
+            frequency_dict = {
+
+            }
+
             for index2 in range(len(transactions)):
+                current = transactions[index2][index]
+                if current not in frequency_dict.keys():
+                    frequency_dict[current] = 1
+                else:
+                    frequency_dict[current] += 1
+
                 if same_val is None:
                     same_val = transactions[index2][index]
                 if not checkSame(same_val, transactions[index2][index]) and transactions[index2][index]:
                     same = False
-                    break
 
             if not same:
                 for index2 in range(len(transactions)):
-                    new_trans[index2].append((transactions[index2][index]))
+
+                    current_item = transactions[index2][index]
+
+                    if frequency_dict[current_item] / len(transactions) < 0.9:
+                        new_trans[index2].append((transactions[index2][index]))
 
         with open('cache.txt', 'wb') as fp:
             pickle.dump(new_trans, fp)
@@ -179,4 +193,4 @@ if __name__ == '__main__':
     # file.close()
 
     result = apriori(new_trans,min_support=0.7, min_confidence=0.85,max_length=5)
-    print("?")
+    print("?", result)
