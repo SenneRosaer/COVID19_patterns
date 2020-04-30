@@ -129,15 +129,15 @@ if __name__ == '__main__':
         df = create_dataframe()
         print(df)
 
-    tmp = list(df['DNA'])
-    transactions = []
-    for item in tmp:
-        item = item[:5835]
-        tmp_trans = []
-        for n in range(3,4):
-            chunks = [item[i:i + n] for i in range(0, len(item), n)]
-            tmp_trans += chunks
-        transactions.append(tuple(tmp_trans))
+        tmp = list(df['DNA'])
+        transactions = []
+        for item in tmp:
+            item = item[:5835]
+            tmp_trans = []
+            for n in range(3,4):
+                chunks = [item[i:i + n] for i in range(0, len(item), n)]
+                tmp_trans += chunks
+            transactions.append(tuple(tmp_trans))
 
         new_trans = []
         for i in range(len(transactions)):
@@ -152,9 +152,9 @@ if __name__ == '__main__':
                     same = False
                     break
 
-        if not same:
-            for index2 in range(len(transactions)):
-                new_trans[index2].append((transactions[index2][index]))
+            if not same:
+                for index2 in range(len(transactions)):
+                    new_trans[index2].append((transactions[index2][index]))
 
         with open('cache.txt', 'wb') as fp:
             pickle.dump(new_trans, fp)
@@ -165,16 +165,18 @@ if __name__ == '__main__':
     for index in range(len(new_trans)):
         new_trans[index] = tuple(new_trans[index])
     print("done")
-    file = open("transactions.txt", "w")
-    for trans in new_trans:
-        tmp = ""
-        for item in trans:
-            tmp += item +", "
 
-        tmp = tmp[:-2]
-        tmp += "\n"
-        file.write(tmp)
-    file.close()
+    ###Write to file###
+    # file = open("transactions.txt", "w")
+    # for trans in new_trans:
+    #     tmp = ""
+    #     for item in trans:
+    #         tmp += item +", "
+    #
+    #     tmp = tmp[:-2]
+    #     tmp += "\n"
+    #     file.write(tmp)
+    # file.close()
 
-    result = apriori(new_trans,min_support=0.6, min_confidence=0.85,max_length=5)
+    result = apriori(new_trans,min_support=0.7, min_confidence=0.85,max_length=5)
     print("?")
