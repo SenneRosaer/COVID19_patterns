@@ -2,6 +2,7 @@ import numpy as np
 import pandas as pd
 from efficient_apriori import apriori
 import os
+import datetime
 import pickle
 from sklearn import tree
 import graphviz
@@ -144,15 +145,24 @@ def checkSame(first, second):
 
 
 if __name__ == '__main__':
-    y = create_y()
+    mortality = create_y()
 
-    if not os.path.isfile("cache.txt"):
+    mortality['date'] = mortality['date'].apply(lambda x: datetime.datetime.strptime(x, "%Y-%m-%d"))
+    if not os.path.isfile("cache.txt") and not os.path.isfile("final_list_cache.txt"):
         df = create_dataframe()
         print(df)
 
-        tmp = list(df['DNA'])
+        del df["Accession"]
+        del df["Length"]
+        del df["Sequence_Type"]
+        del df["Host"]
+        del df["Release_Date"]
+
+
+        date_dna_list = list(df.itertuples(index=False))
         transactions = []
-        for item in tmp:
+        for i in date_dna_list:
+            item = i[2]
             #item = item[:5835]
             tmp_trans = []
             for n in range(3,8):
@@ -191,11 +201,35 @@ if __name__ == '__main__':
                     if frequency_dict[current_item] / len(transactions) < 0.9:
                         new_trans[index2].append((transactions[index2][index]))
 
+        trans_tuples = []
+        for index, item in enumerate(date_dna_list):
+            if str(item[1]) != "nan":
+                if len(str(item[1])) == 7:
+                    d = datetime.datetime.strptime(item[1], "%Y-%m")
+                else:
+                    d = datetime.datetime.strptime(item[1], "%Y-%m-%d")
+                trans_tuples.append((new_trans[index], d ))
+
+        final_list = []
+        for t in trans_tuples:
+            y = mortality[mortality["date"] == (t[1]+datetime.timedelta(days=7))]
+            a =  list(y["total_deaths"])
+            b = list(y["total_cases"])
+            if len(a) and len(b):
+                final_list.append((t[0], a[0] / b[0]))
+        print(final_list)
+
         with open('cache.txt', 'wb') as fp:
             pickle.dump(new_trans, fp)
+
+        with open('final_list_cache.txt', 'wb') as fp:
+            pickle.dump(final_list, fp)
     else:
         with open('cache.txt', 'rb') as fp:
             new_trans = pickle.load(fp)
+
+        with open('final_list_cache.txt', 'rb') as fp:
+            final_list = pickle.load(fp)
 
     for index in range(len(new_trans)):
         new_trans[index] = tuple(new_trans[index])
@@ -218,4 +252,4 @@ if __name__ == '__main__':
     # file.close()
 
     result = apriori(new_trans,min_support=0.7, min_confidence=0.85,max_length=5)
-    print("?", result)
+    # print("?", result)
