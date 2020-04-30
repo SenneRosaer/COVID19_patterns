@@ -1,8 +1,6 @@
 import numpy as np
 import pandas as pd
 from efficient_apriori import apriori
-
-
 def create_dataframe():
     pd.set_option('display.max_rows', 500)
     pd.set_option('display.max_columns', 500)
@@ -63,7 +61,7 @@ def transactionsToTidlist(transactions):
 
 
 def eclat(df, minsup):
-    tidlist = transactionsToTidlist(transactions)
+    tidlist = transactionsToTidlist(df)
     return _eclat([], tidlist, minsup)
 
 
@@ -129,9 +127,9 @@ if __name__ == '__main__':
     tmp = list(df['DNA'])
     transactions = []
     for item in tmp:
-        # item = item[:100]
+        item = item[:5835]
         tmp_trans = []
-        for n in range(3, 8):
+        for n in range(3,4):
             chunks = [item[i:i + n] for i in range(0, len(item), n)]
             tmp_trans += chunks
         transactions.append(tuple(tmp_trans))
@@ -151,8 +149,21 @@ if __name__ == '__main__':
 
         if not same:
             for index2 in range(len(transactions)):
-                new_trans[index2].append(transactions[index2][index])
+                new_trans[index2].append((transactions[index2][index]))
 
+    for index in range(len(new_trans)):
+        new_trans[index] = tuple(new_trans[index])
     print("done")
-    result = apriori(transactions, min_support=0.55)
-    print("?", result)
+    file = open("transactions.txt", "w")
+    for trans in new_trans:
+        tmp = ""
+        for item in trans:
+            tmp += item +", "
+
+        tmp = tmp[:-2]
+        tmp += "\n"
+        file.write(tmp)
+    file.close()
+
+    result = apriori(new_trans,min_support=0.6, min_confidence=0.85,max_length=5)
+    print("?")
