@@ -5,7 +5,9 @@ from own_apriori import apriori2
 import os
 import datetime
 import pickle
-from sklearn import tree
+from sklearn.tree import DecisionTreeClassifier
+from sklearn.feature_extraction.text import CountVectorizer
+from sklearn import preprocessing
 import graphviz
 
 
@@ -85,12 +87,12 @@ def checkSame(first, second):
     return True
 
 
-def create_chunks(dna_list, chunk_min=3, chunk_max=8):
+def create_chunks(date_dna_list, chunk_min=3, chunk_max=8):
     transactions = list()
-    for dna_sequence in dna_list:
+    for item in date_dna_list:
         sequence_transactions = list()
         for n in range(chunk_min, chunk_max):
-            chunks = [dna_sequence[i:(i + n)] for i in range(0, len(dna_sequence), n)]
+            chunks = [item[2][i:(i + n)] for i in range(0, len(item[2]), n)]
             sequence_transactions += chunks
         transactions.append(tuple(sequence_transactions))
     return transactions
@@ -127,7 +129,6 @@ def cache_transactions(transactions, file_name='cache.txt'):
     with open(file_name, 'wb') as fp:
         pickle.dump(transactions, fp)
 
-
 def write_apriori_results(transactions, file_name='test.txt'):
     result = apriori2(transactions, min_support=0.7, min_confidence=0.85, max_length=5)
     with open(file_name, 'w') as fp:
@@ -147,7 +148,7 @@ def create_final_list(mortality, transactions, date_dna_list):
                 d = datetime.datetime.strptime(item[1], "%Y-%m")
             else:
                 d = datetime.datetime.strptime(item[1], "%Y-%m-%d")
-            trans_tuples.append((transactions[index], d))
+            trans_tuples.append((item[2], d))
 
     final_list = []
     for t in trans_tuples:
@@ -158,8 +159,7 @@ def create_final_list(mortality, transactions, date_dna_list):
             final_list.append((t[0], a[0] / b[0]))
     return final_list
 
-def make_date_dna_list():
-    df = create_dataframe()
+def make_date_dna_list(df):
     print(df)
 
     del df["Accession"]
@@ -170,11 +170,31 @@ def make_date_dna_list():
 
     return list(df.itertuples(index=False))
 
+def make_tree(list):
+    string_X = []
+    string_Y = []
+    for i in list:
+        string_X.append(i[0])
+        string_Y.append(i[1])
+
+    word_le = preprocessing.LabelEncoder()
+    word_le.fit(string_X)
+    pos_le = preprocessing.LabelEncoder()
+    pos_le.fit(string_Y)
+
+    X = word_le.transform(string_X)
+    X = X.reshape(-1, 1)
+    Y = pos_le.transform(string_Y)
+
+    cls = DecisionTreeClassifier()
+    cls.fit(X, Y)
+    cache_transactions(cls, "tree")
+
 def frequent_itemsets_apriori(df, cache_results=True):
-    if not os.path.isfile("cache.txt"):
+    if not os.path.isfile("cache.txt") and not os.path.isfile("final_list_cache.txt"):
         mortality = create_y()
-        date_dna_list = make_date_dna_list()
-        transactions = create_chunks(df['DNA'])
+        date_dna_list = make_date_dna_list(df)
+        transactions = create_chunks(date_dna_list)
         transactions = filter_transactions(transactions)
         final_list = create_final_list(mortality, transactions, date_dna_list)
         if cache_results:
@@ -183,8 +203,9 @@ def frequent_itemsets_apriori(df, cache_results=True):
     else:
         with open('cache.txt', 'rb') as fp:
             transactions = pickle.load(fp)
-        with open('final_list_cache.txt') as fp:
+        with open('final_list_cache.txt', 'rb') as fp:
             final_list = pickle.load(fp)
+    make_tree(final_list)
     write_apriori_results(transactions)
 
 
