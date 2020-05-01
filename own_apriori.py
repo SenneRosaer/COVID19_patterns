@@ -74,6 +74,9 @@ def apriori2(
     else:
         itemsets_for_rules = itemsets
 
+    for itemset in itemsets.items():
+        for itemset2 in itemset[1]:
+            itemset[1][itemset2] = itemset[1][itemset2] / num_trans
     return itemsets
 
 
