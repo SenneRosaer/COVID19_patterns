@@ -112,7 +112,7 @@ def create_chunks(date_dna_list, chunk_min=3, chunk_max=8):
     for item in date_dna_list:
         sequence_transactions = list()
         for n in range(chunk_min, chunk_max):
-            chunks = [item[2][i:(i + n)] for i in range(0, len(item[2]), n)]
+            chunks = [(item[2][i:(i + n)], i) for i in range(0, len(item[2]), n)]
             sequence_transactions += chunks
         transactions.append(tuple(sequence_transactions))
     return transactions
@@ -136,23 +136,23 @@ def filter_transactions(transactions):
         same_val = None
         frequency_dict = {}
         for index2 in range(len(transactions)):
-            current = transactions[index2][index1]
+            current = transactions[index2][index1][0]
             if current not in frequency_dict.keys():
                 frequency_dict[current] = 1
             else:
                 frequency_dict[current] += 1
 
             if same_val is None:
-                same_val = transactions[index2][index1]
-            if not checkSame(same_val, transactions[index2][index1]) and transactions[index2][index1]:
+                same_val = transactions[index2][index1][0]
+            if not checkSame(same_val, current) and current:
                 is_same = False
 
         if not is_same:
             for index2 in range(len(transactions)):
-                current_item = transactions[index2][index1]
+                current_item, position = transactions[index2][index1]
 
                 if frequency_dict[current_item] / len(transactions) < 0.9:
-                    new_trans[index2].append((str(index1) + ":" + transactions[index2][index1]))
+                    new_trans[index2].append((str(position) + ":" + current_item))
     return new_trans
 
 
@@ -304,4 +304,5 @@ def frequent_itemsets_apriori_by_month(df, cache_results=True):
 
 if __name__ == '__main__':
     df = create_dataframe()
+    print(df)
     frequent_itemsets_apriori_by_month(df)
