@@ -1,6 +1,7 @@
 import numpy as np
 import pandas as pd
 from efficient_apriori import apriori
+from own_apriori import apriori2
 import os
 import datetime
 import pickle
@@ -46,6 +47,7 @@ def create_dataframe():
     del df["Nuc_Completeness"]
     return df
 
+
 def create_y():
     df = pd.read_csv("owid-covid-data.csv")
     df = df[df.location == "China"]
@@ -61,71 +63,10 @@ def create_y():
     del df["new_deaths"]
     del df["new_cases"]
     print(df)
+
+    df['date'] = df['date'].apply(lambda x: datetime.datetime.strptime(x, "%Y-%m-%d"))
+
     return df
-
-
-def transactionsToTidlist(transactions):
-    """ Converts transactions matrix to tidlist.
-        Return: List of the form [(item1, {tids1}), (item2, {tids2})]
-        (Hint: Store them in a dict d (item -> set) and return list(d.items())
-    """
-    # TODO: Implement
-    count = 0
-    returndict = dict()
-    for trans in transactions:
-        for item in trans:
-            if item not in returndict:
-                tempset = set()
-                tempset.add(count)
-                returndict[item] = tempset
-            else:
-                returndict[item].add(count)
-        count += 1
-    return list(returndict.items())
-
-
-def eclat(df, minsup):
-    tidlist = transactionsToTidlist(df)
-    return _eclat([], tidlist, minsup)
-
-
-def _eclat(prefix, tidlist, minsup):
-    """ Implement the Eclat algorithm recursively.
-        prefix: items in this depth first branch (the set alpha).
-        tidlist: tids of alpha-conditional db.
-        minsup: minimum support.
-        return: list of itemsets with support > minsup. Format: [({item1, item2}, supp1), ({item1}, supp2)]
-    """
-    returnval = []
-    if not prefix:
-        newtidlist = []
-        for item, tidl in tidlist:
-            if len(tidl) >= minsup:
-                returnval.append(({item}, len(tidl)))
-                newtidlist.append(({item}, tidl))
-        if not returnval:
-            return []
-        tidlist = newtidlist
-
-    for i in range(0, len(tidlist)):
-        n_tidlist = []
-        item = tidlist[i][0]
-        tidl = tidlist[i][1]
-        for j in range(i + 1, len(tidlist)):
-            item2 = tidlist[j][0]
-            tidl2 = tidlist[j][1]
-            tempitems = item.union(item2)
-            temptidl = tidl.intersection(tidl2)
-            if len(tempitems) == len(item) + 1:
-                if len(temptidl) >= minsup:
-                    n_tidlist.append((tempitems, temptidl))
-                    returnval.append((tempitems, len(temptidl)))
-        result_list = []
-        if len(n_tidlist) > 1:
-            result_list = _eclat([item], n_tidlist, minsup)
-        returnval = returnval + result_list
-
-    return returnval
 
 
 def checkSame(first, second):
@@ -144,112 +85,110 @@ def checkSame(first, second):
     return True
 
 
-if __name__ == '__main__':
-    mortality = create_y()
-
-    mortality['date'] = mortality['date'].apply(lambda x: datetime.datetime.strptime(x, "%Y-%m-%d"))
-    if not os.path.isfile("cache.txt") and not os.path.isfile("final_list_cache.txt"):
-        df = create_dataframe()
-        print(df)
-
-        del df["Accession"]
-        del df["Length"]
-        del df["Sequence_Type"]
-        del df["Host"]
-        del df["Release_Date"]
+def create_chunks(dna_list, chunk_min=3, chunk_max=8):
+    transactions = list()
+    for dna_sequence in dna_list:
+        sequence_transactions = list()
+        for n in range(chunk_min, chunk_max):
+            chunks = [dna_sequence[i:(i + n)] for i in range(0, len(dna_sequence), n)]
+            sequence_transactions += chunks
+        transactions.append(tuple(sequence_transactions))
+    return transactions
 
 
-        date_dna_list = list(df.itertuples(index=False))
-        transactions = []
-        for i in date_dna_list:
-            item = i[2]
-            #item = item[:5835]
-            tmp_trans = []
-            for n in range(3,8):
-                chunks = [item[i:i + n] for i in range(0, len(item), n)]
-                tmp_trans += chunks
-            transactions.append(tuple(tmp_trans))
+def filter_transactions(transactions):
+    new_trans = [list() for _ in range(len(transactions))]  # != new_trans = [list()] * len(transactions) MEM BULLSHIT
+    for index1 in range(len(transactions[0])):
+        is_same = True
+        same_val = None
+        frequency_dict = {}
+        for index2 in range(len(transactions)):
+            current = transactions[index2][index1]
+            if current not in frequency_dict.keys():
+                frequency_dict[current] = 1
+            else:
+                frequency_dict[current] += 1
 
-        new_trans = []
-        for i in range(len(transactions)):
-            new_trans.append([])
-        for index in range(len(transactions[0])):
-            same = True
-            same_val = None
+            if same_val is None:
+                same_val = transactions[index2][index1]
+            if not checkSame(same_val, transactions[index2][index1]) and transactions[index2][index1]:
+                is_same = False
 
-            frequency_dict = {
-
-            }
-
+        if not is_same:
             for index2 in range(len(transactions)):
-                current = transactions[index2][index]
-                if current not in frequency_dict.keys():
-                    frequency_dict[current] = 1
-                else:
-                    frequency_dict[current] += 1
+                current_item = transactions[index2][index1]
 
-                if same_val is None:
-                    same_val = transactions[index2][index]
-                if not checkSame(same_val, transactions[index2][index]) and transactions[index2][index]:
-                    same = False
+                if frequency_dict[current_item] / len(transactions) < 0.9:
+                    new_trans[index2].append((str(index1) + ":" + transactions[index2][index1]))
+    return new_trans
 
-            if not same:
-                for index2 in range(len(transactions)):
 
-                    current_item = transactions[index2][index]
+def cache_transactions(transactions, file_name='cache.txt'):
+    with open(file_name, 'wb') as fp:
+        pickle.dump(transactions, fp)
 
-                    if frequency_dict[current_item] / len(transactions) < 0.9:
-                        new_trans[index2].append((transactions[index2][index]))
 
-        trans_tuples = []
-        for index, item in enumerate(date_dna_list):
-            if str(item[1]) != "nan":
-                if len(str(item[1])) == 7:
-                    d = datetime.datetime.strptime(item[1], "%Y-%m")
-                else:
-                    d = datetime.datetime.strptime(item[1], "%Y-%m-%d")
-                trans_tuples.append((new_trans[index], d ))
+def write_apriori_results(transactions, file_name='test.txt'):
+    result = apriori2(transactions, min_support=0.7, min_confidence=0.85, max_length=5)
+    with open(file_name, 'w') as fp:
+        for freq_dict in result:
+            for key in result[freq_dict]:
+                string = ""
+                string += str(key)
+                string += ": " + str(result[freq_dict][key]) + "\n"
+                fp.write(string)
+            fp.write("\n\n\n=======================\n\n\n\n")
 
-        final_list = []
-        for t in trans_tuples:
-            y = mortality[mortality["date"] == (t[1]+datetime.timedelta(days=7))]
-            a =  list(y["total_deaths"])
-            b = list(y["total_cases"])
-            if len(a) and len(b):
-                final_list.append((t[0], a[0] / b[0]))
-        print(final_list)
+def create_final_list(mortality, transactions, date_dna_list):
+    trans_tuples = []
+    for index, item in enumerate(date_dna_list):
+        if str(item[1]) != "nan":
+            if len(str(item[1])) == 7:
+                d = datetime.datetime.strptime(item[1], "%Y-%m")
+            else:
+                d = datetime.datetime.strptime(item[1], "%Y-%m-%d")
+            trans_tuples.append((transactions[index], d))
 
-        with open('cache.txt', 'wb') as fp:
-            pickle.dump(new_trans, fp)
+    final_list = []
+    for t in trans_tuples:
+        y = mortality[mortality["date"] == (t[1] + datetime.timedelta(days=7))]
+        a = list(y["total_deaths"])
+        b = list(y["total_cases"])
+        if len(a) and len(b):
+            final_list.append((t[0], a[0] / b[0]))
+    return final_list
 
-        with open('final_list_cache.txt', 'wb') as fp:
-            pickle.dump(final_list, fp)
+def make_date_dna_list():
+    df = create_dataframe()
+    print(df)
+
+    del df["Accession"]
+    del df["Length"]
+    del df["Sequence_Type"]
+    del df["Host"]
+    del df["Release_Date"]
+
+    return list(df.itertuples(index=False))
+
+def frequent_itemsets_apriori(df, cache_results=True):
+    if not os.path.isfile("cache.txt"):
+        mortality = create_y()
+        date_dna_list = make_date_dna_list()
+        transactions = create_chunks(df['DNA'])
+        transactions = filter_transactions(transactions)
+        final_list = create_final_list(mortality, transactions, date_dna_list)
+        if cache_results:
+            cache_transactions(transactions)
+            cache_transactions(final_list, 'final_list_cache.txt')
     else:
         with open('cache.txt', 'rb') as fp:
-            new_trans = pickle.load(fp)
-
-        with open('final_list_cache.txt', 'rb') as fp:
+            transactions = pickle.load(fp)
+        with open('final_list_cache.txt') as fp:
             final_list = pickle.load(fp)
+    write_apriori_results(transactions)
 
-    for index in range(len(new_trans)):
-        new_trans[index] = tuple(new_trans[index])
-    print("done")
 
-    print(new_trans)
-
-    clf = tree.DecisionTreeClassifier()
-
-    ###Write to file###
-    # file = open("transactions.txt", "w")
-    # for trans in new_trans:
-    #     tmp = ""
-    #     for item in trans:
-    #         tmp += item +", "
-    #
-    #     tmp = tmp[:-2]
-    #     tmp += "\n"
-    #     file.write(tmp)
-    # file.close()
-
-    result = apriori(new_trans,min_support=0.7, min_confidence=0.85,max_length=5)
-    # print("?", result)
+if __name__ == '__main__':
+    df = create_dataframe()
+    frequent_itemsets_apriori(df)
+    print("?")
