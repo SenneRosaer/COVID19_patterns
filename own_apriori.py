@@ -74,7 +74,6 @@ def apriori2(
     else:
         itemsets_for_rules = itemsets
 
-
     return itemsets
 
 

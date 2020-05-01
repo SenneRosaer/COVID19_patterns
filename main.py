@@ -22,9 +22,9 @@ def create_dataframe():
     pd.set_option('display.max_columns', 500)
     pd.set_option('display.width', 1000)
 
-    df = pd.read_csv("sequences.csv")
+    df = pd.read_csv("input/sequences.csv")
 
-    file = open("MT372482.1")
+    file = open("input/MT372482.1")
     file = file.read().replace("\n", "")
     file = file.replace("gb|", "")
     file = file.split(">")
@@ -57,7 +57,7 @@ def create_dataframe():
 
 
 def create_y():
-    df = pd.read_csv("owid-covid-data.csv")
+    df = pd.read_csv("/input/owid-covid-data.csv")
     df = df[df.location == "China"]
     del df["new_tests_per_thousand"]
     del df["tests_units"]
@@ -273,7 +273,7 @@ def frequent_itemsets_apriori_by_month(df, cache_results=True):
     result_list = []
     for index, new_df in enumerate(list_of_dataframes):
         if len(list(new_df['DNA'])):
-            transactions = create_chunks(new_df['DNA'])
+            transactions = create_chunks(make_date_dna_list(new_df))
             transactions = filter_transactions(transactions)
             results = write_apriori_results(transactions)
             result_list.append(results)
@@ -295,10 +295,13 @@ def frequent_itemsets_apriori_by_month(df, cache_results=True):
                 set1 = set1 - set2
         final.append(set1)
 
-
-    print("?")
+    with open("output/testresult.txt","w") as f:
+        for index, set_ in enumerate(final):
+            f.write("Month " + str(index + 1) + ":\n")
+            for item in set_:
+                f.write(str(item) + "\n")
+            f.write("\n\n--------\n\n")
 
 if __name__ == '__main__':
     df = create_dataframe()
     frequent_itemsets_apriori_by_month(df)
-    print("?")
