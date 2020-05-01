@@ -5,7 +5,7 @@ from own_apriori import apriori2
 import os
 import datetime
 import pickle
-from sklearn.tree import DecisionTreeClassifier
+from sklearn.tree import DecisionTreeClassifier, export_graphviz
 from sklearn.feature_extraction.text import CountVectorizer
 from sklearn import preprocessing
 import graphviz
@@ -189,6 +189,11 @@ def make_tree(list):
     cls = DecisionTreeClassifier()
     cls.fit(X, Y)
     cache_transactions(cls, "tree")
+
+    # export to dot
+    dot_data = export_graphviz(cls, out_file=None)
+    graph = graphviz.Source(dot_data)
+    graph.render("tree")
 
 def frequent_itemsets_apriori(df, cache_results=True):
     if not os.path.isfile("cache.txt") and not os.path.isfile("final_list_cache.txt"):
