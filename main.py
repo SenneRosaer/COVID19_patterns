@@ -12,6 +12,12 @@ import graphviz
 
 
 def create_dataframe():
+    """
+    Creates dataframe from sequences.csv which contains data about location and time and MT.. file which contains
+    DNA strings alligned
+    Also removes unnecesary columns
+    :return: Pandas dataframe with Dna strings, location, time, ...
+    """
     pd.set_option('display.max_rows', 500)
     pd.set_option('display.max_columns', 500)
     pd.set_option('display.width', 1000)
@@ -72,6 +78,13 @@ def create_y():
 
 
 def checkSame(first, second):
+    """
+    Controls if two parts of a DNA string are the same, if one of them has - or N we consider this as a symbol that can
+    be anything
+    :param first: DNA part as string
+    :param second: DNA part as string
+    :return: Boolean for equal or not
+    """
     first_bases = list(first)
     second_bases = list(second)
     if len(first_bases) != len(second_bases):
@@ -88,6 +101,13 @@ def checkSame(first, second):
 
 
 def create_chunks(date_dna_list, chunk_min=3, chunk_max=8):
+    """
+    Splits a list of strings of DNA in chunks of certain lenghts
+    :param dna_list: list of strings of DNA
+    :param chunk_min: minimum length of chunk
+    :param chunk_max: maximum length of chunk
+    :return: List of lists that contain the chunks
+    """
     transactions = list()
     for item in date_dna_list:
         sequence_transactions = list()
@@ -99,6 +119,17 @@ def create_chunks(date_dna_list, chunk_min=3, chunk_max=8):
 
 
 def filter_transactions(transactions):
+    """
+    Filters the transactions since they contain way to much data
+    1) If every transaction (of the transaction list) has the same item at a certain index we remove this since it is
+    duplicate ==> Done by taking every possible index in a transaction and check if it is the same for every transaction
+
+    2) If at a certain index in the transaction we have a pattern with a very high frequency we remove this since we have
+    more use for the less frequent ones ==> Done by using a dict to count the occurrence
+
+    :param transactions: List of transactions that we need to filter
+    :return: List of transactions without unnecessary data
+    """
     new_trans = [list() for _ in range(len(transactions))]  # != new_trans = [list()] * len(transactions) MEM BULLSHIT
     for index1 in range(len(transactions[0])):
         is_same = True
@@ -126,12 +157,24 @@ def filter_transactions(transactions):
 
 
 def cache_transactions(transactions, file_name='cache.txt'):
+    """
+    Cache certain transactions to use later since filtering can take some time
+    :param transactions: what we will cache
+    :param file_name: file to cache to
+    """
     with open(file_name, 'wb') as fp:
         pickle.dump(transactions, fp)
 
-def write_apriori_results(transactions, file_name='test.txt'):
-    result = apriori2(transactions, min_support=0.7, min_confidence=0.85, max_length=5)
-    with open(file_name, 'w') as fp:
+
+def write_apriori_results(results, file_name='test'):
+    """
+    Write the results of executing apriori to a file for easier usage
+    :param results: Results of the apriori run
+    :param file_name: File name we want to output (time will be added to name so we always have a new file)
+    :return: results
+    """
+    result = apriori2(results, min_support=0.7, min_confidence=0.85, max_length=5)
+    with open('output/' + file_name + str(datetime.datetime.now()) + ".txt", 'w') as fp:
         for freq_dict in result:
             for key in result[freq_dict]:
                 string = ""
@@ -139,6 +182,7 @@ def write_apriori_results(transactions, file_name='test.txt'):
                 string += ": " + str(result[freq_dict][key]) + "\n"
                 fp.write(string)
             fp.write("\n\n\n=======================\n\n\n\n")
+    return result
 
 def create_final_list(mortality, transactions, date_dna_list):
     trans_tuples = []
@@ -196,6 +240,12 @@ def make_tree(list):
     graph.render("tree")
 
 def frequent_itemsets_apriori(df, cache_results=True):
+    """
+    Runs all the apriori algorithm edited to only compute frequent sets
+    :param df: Dataframe we want to use for calculation
+    :param cache_results: Boolean to see if we want to use cached transactions
+    :return: None
+    """
     if not os.path.isfile("cache.txt") and not os.path.isfile("final_list_cache.txt"):
         mortality = create_y()
         date_dna_list = make_date_dna_list(df)
@@ -214,7 +264,41 @@ def frequent_itemsets_apriori(df, cache_results=True):
     write_apriori_results(transactions)
 
 
+def frequent_itemsets_apriori_by_month(df, cache_results=True):
+    df.info()
+    df['Collection_Date'] = pd.to_datetime(df['Collection_Date'])
+    df.info()
+    list_of_dataframes = [df.loc[(df.Collection_Date.dt.month == _)] for _ in range(1,10)]
+
+    result_list = []
+    for index, new_df in enumerate(list_of_dataframes):
+        if len(list(new_df['DNA'])):
+            transactions = create_chunks(new_df['DNA'])
+            transactions = filter_transactions(transactions)
+            results = write_apriori_results(transactions)
+            result_list.append(results)
+
+    final = []
+    for item in result_list:
+        set1 = set()
+        for tmp in item:
+            t = set(item[tmp].items())
+            set1 = set1.union(t)
+
+
+        for item2 in result_list:
+            if item != item2:
+                set2 = set()
+                for tmp in item2:
+                    t = set(item2[tmp].items())
+                    set2 = set2.union(t)
+                set1 = set1 - set2
+        final.append(set1)
+
+
+    print("?")
+
 if __name__ == '__main__':
     df = create_dataframe()
-    frequent_itemsets_apriori(df)
+    frequent_itemsets_apriori_by_month(df)
     print("?")
