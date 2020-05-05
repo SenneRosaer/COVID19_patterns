@@ -224,10 +224,10 @@ def make_tree(list):
         string_X.append(i[0])
         Y.append(i[1])
 
-    word_le = CountVectorizer()
-    word_le.fit(string_X)
+    vect = CountVectorizer()
+    vect.fit(string_X)
 
-    X = word_le.transform(string_X)
+    X = vect.transform(string_X)
 
     cls = DecisionTreeRegressor(min_samples_leaf=3)
     cls.fit(X, Y)
@@ -235,6 +235,8 @@ def make_tree(list):
 
     # export to dot
     dot_data = export_graphviz(cls, out_file=None)
+    for val in range(0, len(vect.get_feature_names())-1):
+        dot_data = dot_data.replace("X[" + str(val) + "] <= 0.5", str(vect.get_feature_names()[val]))
     graph = graphviz.Source(dot_data)
     # graph.source = graph.source.replace("X[4] <= 0.5", "yeet")
     graph.render("tree")
