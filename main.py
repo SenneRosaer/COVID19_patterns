@@ -174,7 +174,7 @@ def write_apriori_results(results, file_name='test'):
     :return: results
     """
     result = apriori2(results, min_support=0.7, min_confidence=0.85, max_length=5)
-    with open('output/' + file_name + str(datetime.datetime.now()) + ".txt", 'w') as fp:
+    with open('output/' + file_name + datetime.datetime.now().strftime('%Y-%m-%d_%Hh%M') + '.txt', 'w') as fp:
         for freq_dict in result:
             for key in result[freq_dict]:
                 string = ""
@@ -183,6 +183,7 @@ def write_apriori_results(results, file_name='test'):
                 fp.write(string)
             fp.write("\n\n\n=======================\n\n\n\n")
     return result
+
 
 def create_final_list(mortality, transactions, date_dna_list):
     trans_tuples = []
@@ -203,6 +204,7 @@ def create_final_list(mortality, transactions, date_dna_list):
             final_list.append((t[0], a[0] / b[0]))
     return final_list
 
+
 def make_date_dna_list(df):
     print(df)
 
@@ -213,6 +215,7 @@ def make_date_dna_list(df):
     del df["Release_Date"]
 
     return list(df.itertuples(index=False))
+
 
 def make_tree(list):
     string_X = []
@@ -238,6 +241,7 @@ def make_tree(list):
     dot_data = export_graphviz(cls, out_file=None)
     graph = graphviz.Source(dot_data)
     graph.render("tree")
+
 
 def frequent_itemsets_apriori(df, cache_results=True):
     """
@@ -268,7 +272,7 @@ def frequent_itemsets_apriori_by_month(df, cache_results=True):
     df.info()
     df['Collection_Date'] = pd.to_datetime(df['Collection_Date'])
     df.info()
-    list_of_dataframes = [df.loc[(df.Collection_Date.dt.month == _)] for _ in range(1,10)]
+    list_of_dataframes = [df.loc[(df.Collection_Date.dt.month == _)] for _ in range(1, 10)]
 
     result_list = []
     for index, new_df in enumerate(list_of_dataframes):
@@ -285,7 +289,6 @@ def frequent_itemsets_apriori_by_month(df, cache_results=True):
             t = set(item[tmp].items())
             set1 = set1.union(t)
 
-
         for item2 in result_list:
             if item != item2:
                 set2 = set()
@@ -295,12 +298,13 @@ def frequent_itemsets_apriori_by_month(df, cache_results=True):
                 set1 = set1 - set2
         final.append(set1)
 
-    with open("output/testresult.txt","w") as f:
+    with open("output/testresult.txt", "w") as f:
         for index, set_ in enumerate(final):
             f.write("Month " + str(index + 1) + ":\n")
             for item in set_:
                 f.write(str(item) + "\n")
             f.write("\n\n--------\n\n")
+
 
 if __name__ == '__main__':
     df = create_dataframe()
