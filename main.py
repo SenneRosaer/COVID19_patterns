@@ -117,6 +117,22 @@ def create_chunks(date_dna_list, chunk_min=3, chunk_max=8):
         transactions.append(tuple(sequence_transactions))
     return transactions
 
+def create_chunks2(date_dna_list, chunk_min=3, chunk_max=8):
+    """
+    Splits a list of strings of DNA in chunks of certain lenghts
+    :param dna_list: list of strings of DNA
+    :param chunk_min: minimum length of chunk
+    :param chunk_max: maximum length of chunk
+    :return: List of lists that contain the chunks
+    """
+    transactions = list()
+    for item in date_dna_list:
+        sequence_transactions = list()
+        for n in range(chunk_min, chunk_max):
+            chunks = [(item[i:(i + n)], i) for i in range(0, len(item), n)]
+            sequence_transactions += chunks
+        transactions.append(tuple(sequence_transactions))
+    return transactions
 
 def filter_transactions(transactions):
     """
@@ -224,9 +240,18 @@ def make_tree(list):
         string_X.append(i[0])
         Y.append(i[1])
 
+
+    string_X = create_chunks2(string_X)
+    tmp = []
+    for item in string_X:
+        string = ""
+        for item2 in item:
+            string += str(item2) + " "
+        tmp.append(string)
+    string_X = tmp
+
     vect = CountVectorizer()
     vect.fit(string_X)
-
     X = vect.transform(string_X)
 
     cls = DecisionTreeRegressor(min_samples_leaf=3)
