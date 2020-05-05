@@ -5,7 +5,7 @@ from own_apriori import apriori2
 import os
 import datetime
 import pickle
-from sklearn.tree import DecisionTreeClassifier, export_graphviz
+from sklearn.tree import DecisionTreeClassifier, export_graphviz, DecisionTreeRegressor
 from sklearn.feature_extraction.text import CountVectorizer
 from sklearn import preprocessing
 import graphviz
@@ -57,7 +57,7 @@ def create_dataframe():
 
 
 def create_y():
-    df = pd.read_csv("/input/owid-covid-data.csv")
+    df = pd.read_csv("./input/owid-covid-data.csv")
     df = df[df.location == "China"]
     del df["new_tests_per_thousand"]
     del df["tests_units"]
@@ -219,27 +219,24 @@ def make_date_dna_list(df):
 
 def make_tree(list):
     string_X = []
-    string_Y = []
+    Y = []
     for i in list:
         string_X.append(i[0])
-        string_Y.append(i[1])
+        Y.append(i[1])
 
-    word_le = preprocessing.LabelEncoder()
+    word_le = CountVectorizer()
     word_le.fit(string_X)
-    pos_le = preprocessing.LabelEncoder()
-    pos_le.fit(string_Y)
 
     X = word_le.transform(string_X)
-    X = X.reshape(-1, 1)
-    Y = pos_le.transform(string_Y)
 
-    cls = DecisionTreeClassifier()
+    cls = DecisionTreeRegressor(min_samples_leaf=3)
     cls.fit(X, Y)
     cache_transactions(cls, "tree")
 
     # export to dot
     dot_data = export_graphviz(cls, out_file=None)
     graph = graphviz.Source(dot_data)
+    # graph.source = graph.source.replace("X[4] <= 0.5", "yeet")
     graph.render("tree")
 
 
@@ -309,4 +306,4 @@ def frequent_itemsets_apriori_by_month(df, cache_results=True):
 if __name__ == '__main__':
     df = create_dataframe()
     print(df)
-    frequent_itemsets_apriori_by_month(df)
+    frequent_itemsets_apriori(df)
