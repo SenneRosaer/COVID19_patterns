@@ -209,7 +209,8 @@ def write_apriori_results(results, file_name='test'):
 
     with open('output/' + file_name + datetime.datetime.now().strftime('%Y-%m-%d_%Hh%M') + '-rules.txt', 'w') as fp:
         for rule in apr[1]:
-            fp.write(str(rule) + "\n")
+            if rule.rhs.find("-") or rule.lhs.find("-"):
+                fp.write(str(rule) + "\n")
     return apr
 
 
@@ -224,7 +225,7 @@ def create_final_list(mortality, transactions, date_dna_list, useTrans=False):
             trans_tuples.append((item[2], d))
 
     final_list = []
-    for t in trans_tuples:
+    for index, t in enumerate(trans_tuples):
         y = mortality[mortality["date"] == (t[1] + datetime.timedelta(days=7))]
         a = list(y["total_deaths"])
         b = list(y["total_cases"])
