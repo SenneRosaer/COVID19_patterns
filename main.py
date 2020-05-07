@@ -168,7 +168,7 @@ def filter_transactions(transactions):
                 current_item, position = transactions[index2][index1]
 
                 if frequency_dict[current_item] / len(transactions) < 0.9:
-                    new_trans[index2].append((str(position) + ":" + current_item))
+                    new_trans[index2].append((current_item + "@" + str(position)))
     return new_trans
 
 
@@ -274,14 +274,20 @@ def make_tree(list):
         X = uncache("vect_X")
         feature_names = uncache("ft_names")
 
-    cls = DecisionTreeRegressor(min_samples_leaf=3)
-    cls.fit(X, Y)
-    cache(cls, "tree")
+    if not isCached("tree"):
+        cls = DecisionTreeRegressor(min_samples_leaf=3)
+        cls.fit(X, Y)
+        cache(cls, "tree")
+    else:
+        cls = uncache("tree")
 
     # export to dot
     dot_data = export_graphviz(cls, out_file=None)
     for val in range(0, len(feature_names)-1):
         dot_data = dot_data.replace("X[" + str(val) + "] <= 0.5", str(feature_names[val]))
+    dot_data = dot_data.replace("True", "Does not contain")
+    dot_data = dot_data.replace("False", "Does contain")
+    dot_data = dot_data.replace("\'", "")
     graph = graphviz.Source(dot_data)
     graph.render("tree")
 
