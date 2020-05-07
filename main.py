@@ -250,6 +250,7 @@ def make_tree(list):
         tmp.append(string)
     string_X = tmp
 
+
     vect = CountVectorizer()
     vect.fit(string_X)
     X = vect.transform(string_X)
@@ -261,9 +262,7 @@ def make_tree(list):
     # export to dot
     dot_data = export_graphviz(cls, out_file=None)
     for val in range(0, len(vect.get_feature_names())-1):
-        dot_data = dot_data.replace("X[" + str(val) + "] <= 0.5", str(vect.get_feature_names()[val]))
-    dot_data = dot_data.replace("True", "Does not contain")
-    dot_data = dot_data.replace("False", "Does contain")
+        dot_data = dot_data.replace("X[" + str(val) + "]", str(vect.get_feature_names()[val]))
     graph = graphviz.Source(dot_data)
     graph.render("tree")
 
