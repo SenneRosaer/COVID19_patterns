@@ -196,7 +196,8 @@ def write_apriori_results(results, file_name='test'):
     :param file_name: File name we want to output (time will be added to name so we always have a new file)
     :return: results
     """
-    result = apriori2(results, min_support=0.7, min_confidence=0.85, max_length=5)
+    apr = apriori2(results, min_support=0.7, min_confidence=0.85, max_length=5)
+    result = apr[0]
     with open('output/' + file_name + datetime.datetime.now().strftime('%Y-%m-%d_%Hh%M') + '.txt', 'w') as fp:
         for freq_dict in result:
             for key in result[freq_dict]:
@@ -205,10 +206,14 @@ def write_apriori_results(results, file_name='test'):
                 string += ": " + str(result[freq_dict][key]) + "\n"
                 fp.write(string)
             fp.write("\n\n\n=======================\n\n\n\n")
-    return result
+
+    with open('output/' + file_name + datetime.datetime.now().strftime('%Y-%m-%d_%Hh%M') + '-rules.txt', 'w') as fp:
+        for rule in apr[1]:
+            fp.write(str(rule) + "\n")
+    return apr
 
 
-def create_final_list(mortality, transactions, date_dna_list):
+def create_final_list(mortality, transactions, date_dna_list, useTrans=False):
     trans_tuples = []
     for index, item in enumerate(date_dna_list):
         if str(item[1]) != "nan":
@@ -224,7 +229,35 @@ def create_final_list(mortality, transactions, date_dna_list):
         a = list(y["total_deaths"])
         b = list(y["total_cases"])
         if len(a) and len(b):
-            final_list.append((t[0], a[0] / b[0]))
+            if useTrans:
+                m = a[0] / b[0]
+                m = m * 100
+                if m < 0.5:
+                    m = "0-0.5"
+                elif m < 1:
+                    m = "0.5-1"
+                elif m < 1.5:
+                    m = "1-1.5"
+                elif m < 2:
+                    m = "1.5-2"
+                elif m < 2.5:
+                    m = "2-2.5"
+                elif m < 3:
+                    m = "2.5-3"
+                elif m < 3.5:
+                    m = "3-3.5"
+                elif m < 4:
+                    m = "3.5-4"
+                elif m < 4.5:
+                    m = "4-4.5"
+                elif m < 5:
+                    m = "4.5-5"
+                else:
+                    m = "5-..."
+                transactions[index].append(m)
+            else:
+                final_list.append((t[0], a[0] / b[0]))
+
     return final_list
 
 
@@ -303,6 +336,7 @@ def frequent_itemsets_apriori(df, cache_results=True):
         date_dna_list = make_date_dna_list(df)
         transactions = create_chunks(date_dna_list)
         transactions = filter_transactions(transactions)
+        create_final_list(mortality, transactions, date_dna_list, True)
         final_list = create_final_list(mortality, transactions, date_dna_list)
         if cache_results:
             cache(transactions, 'cache.txt')
@@ -310,7 +344,7 @@ def frequent_itemsets_apriori(df, cache_results=True):
     else:
         transactions = uncache('cache.txt')
         final_list = uncache('final_list_cache.txt')
-    make_tree(final_list)
+    # make_tree(final_list)
     write_apriori_results(transactions)
 
 

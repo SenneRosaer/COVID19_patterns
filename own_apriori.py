@@ -77,7 +77,10 @@ def apriori2(
     for itemset in itemsets.items():
         for itemset2 in itemset[1]:
             itemset[1][itemset2] = itemset[1][itemset2] / num_trans
-    return itemsets
+
+    rules = generate_rules_apriori(itemsets_for_rules, min_confidence, num_trans, verbosity)
+    return itemsets, list(rules)
+    # return itemsets
 
 
 def _convert_to_counts(itemsets):
