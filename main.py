@@ -233,6 +233,10 @@ def make_date_dna_list(df):
     return list(df.itertuples(index=False))
 
 
+class Tokenizer(object):
+    def __call__(self, doc):
+        return set(doc.split(","))
+
 def make_tree(list):
     string_X = []
     Y = []
@@ -246,15 +250,15 @@ def make_tree(list):
     for item in string_X:
         string = ""
         for item2 in item:
-            string += str(item2[0]) +":" + str(item2[1]) + " "
+            string += str(item2[0]) +":" + str(item2[1]) + ","
         tmp.append(string)
     string_X = tmp
 
 
-    vect = CountVectorizer()
+    vect = CountVectorizer(tokenizer=Tokenizer())
     vect.fit(string_X)
     X = vect.transform(string_X)
-
+    tmp = vect.get_feature_names()
     cls = DecisionTreeRegressor(min_samples_leaf=3)
     cls.fit(X, Y)
     cache_transactions(cls, "tree")
@@ -265,7 +269,6 @@ def make_tree(list):
         dot_data = dot_data.replace("X[" + str(val) + "]", str(vect.get_feature_names()[val]))
     graph = graphviz.Source(dot_data)
     graph.render("tree")
-
 
 def frequent_itemsets_apriori(df, cache_results=True):
     """
