@@ -22,9 +22,9 @@ def create_dataframe():
     pd.set_option('display.max_columns', 500)
     pd.set_option('display.width', 1000)
 
-    df = pd.read_csv("input/sequences.csv")
+    df = pd.read_csv("input/sequences_USA.csv")
 
-    file = open("input/MT372482.1")
+    file = open("input/USA_allignment")
     file = file.read().replace("\n", "")
     file = file.replace("gb|", "")
     file = file.split(">")
@@ -55,10 +55,9 @@ def create_dataframe():
     del df["Nuc_Completeness"]
     return df
 
-
 def create_y():
     df = pd.read_csv("./input/owid-covid-data.csv")
-    df = df[df.location == "China"]
+    df = df[df.location == "United States"]
     del df["new_tests_per_thousand"]
     del df["tests_units"]
     del df["iso_code"]
@@ -75,7 +74,6 @@ def create_y():
     df['date'] = df['date'].apply(lambda x: datetime.datetime.strptime(x, "%Y-%m-%d"))
 
     return df
-
 
 def checkSame(first, second):
     """
@@ -98,7 +96,6 @@ def checkSame(first, second):
             else:
                 return False
     return True
-
 
 def create_chunks(date_dna_list, chunk_min=3, chunk_max=8):
     """
@@ -316,6 +313,7 @@ def make_tree(list):
         X = uncache("vect_X")
         feature_names = uncache("ft_names")
 
+    print("is fitting")
     if not isCached("tree"):
         cls = DecisionTreeRegressor(min_samples_leaf=3)
         cls.fit(X, Y)
