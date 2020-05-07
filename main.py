@@ -172,14 +172,19 @@ def filter_transactions(transactions):
     return new_trans
 
 
-def cache_transactions(transactions, file_name='cache.txt'):
+def cache(transactions, file_name):
     """
     Cache certain transactions to use later since filtering can take some time
     :param transactions: what we will cache
     :param file_name: file to cache to
     """
-    with open(file_name, 'wb') as fp:
+    with open("cache/" + file_name, 'wb') as fp:
         pickle.dump(transactions, fp)
+
+def uncache(file_name):
+        with open("cache/" + file_name, 'rb') as fp:
+            transactions = pickle.load(fp)
+        return transactions
 
 
 def write_apriori_results(results, file_name='test'):
@@ -257,7 +262,7 @@ def make_tree(list):
 
     cls = DecisionTreeRegressor(min_samples_leaf=3)
     cls.fit(X, Y)
-    cache_transactions(cls, "tree")
+    cache(cls, "tree")
 
     # export to dot
     dot_data = export_graphviz(cls, out_file=None)
@@ -281,13 +286,11 @@ def frequent_itemsets_apriori(df, cache_results=True):
         transactions = filter_transactions(transactions)
         final_list = create_final_list(mortality, transactions, date_dna_list)
         if cache_results:
-            cache_transactions(transactions)
-            cache_transactions(final_list, 'final_list_cache.txt')
+            cache(transactions, 'cache.txt')
+            cache(final_list, 'final_list_cache.txt')
     else:
-        with open('cache.txt', 'rb') as fp:
-            transactions = pickle.load(fp)
-        with open('final_list_cache.txt', 'rb') as fp:
-            final_list = pickle.load(fp)
+        transactions = uncache('cache.txt')
+        final_list = uncache('final_list_cache.txt')
     make_tree(final_list)
     write_apriori_results(transactions)
 
