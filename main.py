@@ -246,7 +246,7 @@ def make_tree(list):
     for item in string_X:
         string = ""
         for item2 in item:
-            string += str(item2) + " "
+            string += str(item2[0]) +":" + str(item2[1]) + " "
         tmp.append(string)
     string_X = tmp
 
