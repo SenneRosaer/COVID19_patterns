@@ -186,6 +186,8 @@ def uncache(file_name):
             transactions = pickle.load(fp)
         return transactions
 
+def isCached(file_name):
+    return os.path.isfile("cache/" + file_name)
 
 def write_apriori_results(results, file_name='test'):
     """
@@ -249,28 +251,37 @@ def make_tree(list):
         string_X.append(i[0])
         Y.append(i[1])
 
+    if not isCached("string_x"):
+        string_X = create_chunks2(string_X)
+        string_X = filter_transactions(string_X)
+        tmp = []
+        for item in string_X:
+            string = str(item) + ","
+            tmp.append(string)
+        string_X = tmp
+        cache(string_X, "string_x")
+    else:
+        string_X = uncache("string_x")
 
-    string_X = create_chunks2(string_X)
-    string_X = filter_transactions(string_X)
-    tmp = []
-    for item in string_X:
-        string = str(item) + ","
-        tmp.append(string)
-    string_X = tmp
+    if not isCached("vect"):
+        vect = CountVectorizer(tokenizer=Tokenizer())
+        vect.fit(string_X)
+        X = vect.transform(string_X)
+        cache(X, "vect_X")
+        feature_names = vect.get_feature_names()
+        cache(feature_names, "ft_names")
+    else:
+        X = uncache("vect_X")
+        feature_names = uncache("ft_names")
 
-
-    vect = CountVectorizer(tokenizer=Tokenizer())
-    vect.fit(string_X)
-    X = vect.transform(string_X)
-    tmp = vect.get_feature_names()
     cls = DecisionTreeRegressor(min_samples_leaf=3)
     cls.fit(X, Y)
     cache(cls, "tree")
 
     # export to dot
     dot_data = export_graphviz(cls, out_file=None)
-    for val in range(0, len(vect.get_feature_names())-1):
-        dot_data = dot_data.replace("X[" + str(val) + "]", str(vect.get_feature_names()[val]))
+    for val in range(0, len(feature_names)-1):
+        dot_data = dot_data.replace("X[" + str(val) + "] <= 0.5", str(feature_names[val]))
     graph = graphviz.Source(dot_data)
     graph.render("tree")
 
@@ -281,7 +292,7 @@ def frequent_itemsets_apriori(df, cache_results=True):
     :param cache_results: Boolean to see if we want to use cached transactions
     :return: None
     """
-    if not os.path.isfile("cache.txt") and not os.path.isfile("final_list_cache.txt"):
+    if not isCached("cache.txt") and not isCached("final_list_cache.txt"):
         mortality = create_y()
         date_dna_list = make_date_dna_list(df)
         transactions = create_chunks(date_dna_list)
