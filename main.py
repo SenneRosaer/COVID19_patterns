@@ -5,9 +5,8 @@ from own_apriori import apriori2
 import os
 import datetime
 import pickle
-from sklearn.tree import DecisionTreeClassifier, export_graphviz, DecisionTreeRegressor
+from sklearn.tree import export_graphviz, DecisionTreeRegressor
 from sklearn.feature_extraction.text import CountVectorizer
-from sklearn import preprocessing
 import graphviz
 
 
@@ -37,7 +36,6 @@ def create_dataframe():
         else:
             pass
     df2 = pd.DataFrame(result, columns=["Accession", "DNA"])
-    convert_dict = {'Accession': object}
     df['Accession'] = df['Accession'].astype(str)
     df2['Accession'] = df2['Accession'].astype(str)
 
@@ -55,7 +53,13 @@ def create_dataframe():
     del df["Nuc_Completeness"]
     return df
 
+
 def create_y():
+    """
+    This function is used to create a dataframe containing the mortality data
+    :return: Dataframe with mortality data
+    (columns: country, total deaths, amount of cases, date, percentage of population that is tested)
+    """
     df = pd.read_csv("./input/owid-covid-data.csv")
     df = df[df.location == "United States"]
     del df["new_tests_per_thousand"]
@@ -74,6 +78,7 @@ def create_y():
     df['date'] = df['date'].apply(lambda x: datetime.datetime.strptime(x, "%Y-%m-%d"))
 
     return df
+
 
 def checkSame(first, second):
     """
@@ -97,6 +102,7 @@ def checkSame(first, second):
                 return False
     return True
 
+
 def create_chunks(date_dna_list, chunk_min=3, chunk_max=8):
     """
     Splits a list of strings of DNA in chunks of certain lenghts
@@ -114,6 +120,7 @@ def create_chunks(date_dna_list, chunk_min=3, chunk_max=8):
         transactions.append(tuple(sequence_transactions))
     return transactions
 
+
 def create_chunks2(date_dna_list, chunk_min=3, chunk_max=8):
     """
     Splits a list of strings of DNA in chunks of certain lenghts
@@ -130,6 +137,7 @@ def create_chunks2(date_dna_list, chunk_min=3, chunk_max=8):
             sequence_transactions += chunks
         transactions.append(tuple(sequence_transactions))
     return transactions
+
 
 def filter_transactions(transactions):
     """
@@ -178,13 +186,26 @@ def cache(transactions, file_name):
     with open("cache/" + file_name, 'wb') as fp:
         pickle.dump(transactions, fp)
 
-def uncache(file_name):
-        with open("cache/" + file_name, 'rb') as fp:
-            transactions = pickle.load(fp)
-        return transactions
 
-def isCached(file_name):
+def uncache(file_name):
+    """
+    Load a cache file
+    :param file_name: cache file to load
+    :return: list of transactions that were in the cache file
+    """
+    with open("cache/" + file_name, 'rb') as fp:
+        transactions = pickle.load(fp)
+    return transactions
+
+
+def is_cached(file_name):
+    """
+    Check whether a file is in the cache folder
+    :param file_name: file to check for
+    :return: True if file exists in cache folder, else False
+    """
     return os.path.isfile("cache/" + file_name)
+
 
 def write_apriori_results(results, file_name='test'):
     """
@@ -211,6 +232,18 @@ def write_apriori_results(results, file_name='test'):
 
 
 def create_final_list(mortality, transactions, date_dna_list, useTrans=False):
+    """
+    This function combines mortality with the transactions.
+    The date is used to combine the transactions and the mortality.
+
+    Only returns data that has mortality.
+
+    :param mortality: mortality data
+    :param transactions: list of transactions
+    :param date_dna_list: list of dates
+    :param useTrans: use the transactions or not
+    :return: list that links DNA strings with mortality
+    """
     trans_tuples = []
     for index, item in enumerate(date_dna_list):
         if str(item[1]) != "nan":
@@ -259,6 +292,11 @@ def create_final_list(mortality, transactions, date_dna_list, useTrans=False):
 
 
 def make_date_dna_list(df):
+    """
+    Creates a list of the dates.
+    :param df: Dataframe to create list from
+    :return: list of dates
+    """
     print(df)
 
     del df["Accession"]
@@ -271,17 +309,23 @@ def make_date_dna_list(df):
 
 
 class Tokenizer(object):
+    """Custom tokenizer used to create tokens"""
     def __call__(self, doc):
         return set(doc.split(","))
 
+
 def make_tree(list):
+    """
+    Creates a tree using DNA data in a list
+    :param list: list containing DNA
+    """
     string_X = []
     Y = []
     for i in list:
         string_X.append(i[0])
         Y.append(i[1])
 
-    if not isCached("string_x"):
+    if not is_cached("string_x"):
         string_X = create_chunks2(string_X)
         string_X = filter_transactions(string_X)
         tmp = []
@@ -293,7 +337,7 @@ def make_tree(list):
     else:
         string_X = uncache("string_x")
 
-    if not isCached("vect"):
+    if not is_cached("vect"):
         vect = CountVectorizer(tokenizer=Tokenizer())
         vect.fit(string_X)
         X = vect.transform(string_X)
@@ -305,7 +349,7 @@ def make_tree(list):
         feature_names = uncache("ft_names")
 
     print("is fitting")
-    if not isCached("tree"):
+    if not is_cached("tree"):
         cls = DecisionTreeRegressor(min_samples_leaf=3)
         cls.fit(X, Y)
         cache(cls, "tree")
@@ -314,13 +358,14 @@ def make_tree(list):
 
     # export to dot
     dot_data = export_graphviz(cls, out_file=None)
-    for val in range(0, len(feature_names)-1):
+    for val in range(0, len(feature_names) - 1):
         dot_data = dot_data.replace("X[" + str(val) + "] <= 0.5", str(feature_names[val]))
     dot_data = dot_data.replace("True", "Does not contain")
     dot_data = dot_data.replace("False", "Does contain")
     dot_data = dot_data.replace("\'", "")
     graph = graphviz.Source(dot_data)
     graph.render("tree")
+
 
 def frequent_itemsets_apriori(df, cache_results=True):
     """
@@ -329,7 +374,7 @@ def frequent_itemsets_apriori(df, cache_results=True):
     :param cache_results: Boolean to see if we want to use cached transactions
     :return: None
     """
-    if not isCached("cache.txt") and not isCached("final_list_cache.txt"):
+    if not is_cached("cache.txt") and not is_cached("final_list_cache.txt"):
         mortality = create_y()
         date_dna_list = make_date_dna_list(df)
         transactions = create_chunks(date_dna_list)
@@ -347,6 +392,12 @@ def frequent_itemsets_apriori(df, cache_results=True):
 
 
 def frequent_itemsets_apriori_by_month(df, cache_results=True):
+    """
+    Get the frequent itemsets by month
+    :param df: dataframe to get frequent itemsets from
+    :param cache_results: if true, results get cached
+    :return: list of frequent itemsets
+    """
     df.info()
     df['Collection_Date'] = pd.to_datetime(df['Collection_Date'])
     df.info()
