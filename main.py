@@ -209,8 +209,16 @@ def write_apriori_results(results, file_name='test'):
 
     with open('output/' + file_name + datetime.datetime.now().strftime('%Y-%m-%d_%Hh%M') + '-rules.txt', 'w') as fp:
         for rule in apr[1]:
-            if rule.rhs.find("-") or rule.lhs.find("-"):
+            boolean = False
+            for i in rule.rhs:
+                if i.find("-"):
+                    boolean = True
+            for i in rule.lhs:
+                if i.find("-"):
+                    boolean = True
+            if boolean:
                 fp.write(str(rule) + "\n")
+                boolean = False
     return apr
 
 
