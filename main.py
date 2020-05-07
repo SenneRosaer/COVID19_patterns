@@ -251,11 +251,10 @@ def make_tree(list):
 
 
     string_X = create_chunks2(string_X)
+    string_X = filter_transactions(string_X)
     tmp = []
     for item in string_X:
-        string = ""
-        for item2 in item:
-            string += str(item2[0]) +":" + str(item2[1]) + ","
+        string = str(item) + ","
         tmp.append(string)
     string_X = tmp
 
