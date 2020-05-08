@@ -115,7 +115,13 @@ def create_chunks(date_dna_list, chunk_min=3, chunk_max=8):
     for item in date_dna_list:
         sequence_transactions = list()
         for n in range(chunk_min, chunk_max):
-            chunks = [(item[2][i:(i + n)], i) for i in range(0, len(item[2]), n)]
+            chunks = []
+            ATG_pos = 0
+            for i in range(0, len(item[2]), n):
+                if i < len(item[2])-2:
+                    if item[2][i:i+3] == "ATG":
+                        ATG_pos=i
+                chunks.append((item[2][i:(i + n)], str(i) + "-ATG@" + str(i - ATG_pos - item[2].count("-", ATG_pos, i))))
             sequence_transactions += chunks
         transactions.append(tuple(sequence_transactions))
     return transactions
@@ -133,7 +139,13 @@ def create_chunks2(date_dna_list, chunk_min=3, chunk_max=8):
     for item in date_dna_list:
         sequence_transactions = list()
         for n in range(chunk_min, chunk_max):
-            chunks = [(item[i:(i + n)], i) for i in range(0, len(item), n)]
+            chunks = []
+            ATG_pos = 0
+            for i in range(0, len(item), n):
+                if i < len(item) - 2:
+                    if item[i:i + 3] == "ATG":
+                        ATG_pos = i
+                chunks.append((item[i:(i + n)], str(i) + "-ATG@" + str(i - ATG_pos - item.count("-", ATG_pos, i))))
             sequence_transactions += chunks
         transactions.append(tuple(sequence_transactions))
     return transactions
@@ -359,7 +371,7 @@ def make_tree(list):
 
     print("is fitting")
     if not is_cached("tree"):
-        cls = DecisionTreeRegressor(min_samples_leaf=3)
+        cls = DecisionTreeRegressor(min_samples_leaf=20)
         cls.fit(X, Y)
         cache(cls, "tree")
     else:
@@ -396,8 +408,8 @@ def frequent_itemsets_apriori(df, cache_results=True):
     else:
         transactions = uncache('cache.txt')
         final_list = uncache('final_list_cache.txt')
-    # make_tree(final_list)
-    write_apriori_results(transactions)
+    make_tree(final_list)
+    # write_apriori_results(transactions)
 
 
 def frequent_itemsets_apriori_by_month(df, cache_results=True):
