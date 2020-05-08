@@ -76,10 +76,18 @@ def apriori2(
 
     for itemset in itemsets.items():
         for itemset2 in itemset[1]:
-            itemset[1][itemset2] = itemset[1][itemset2] / num_trans
-
-    rules = generate_rules_apriori(itemsets_for_rules, min_confidence, num_trans, verbosity)
-    return itemsets, list(rules)
+            tmp = itemset[1][itemset2] / num_trans
+            if tmp > 0.7 and tmp < 0.75:
+                itemset[1][itemset2] = "[0.7 - 0.75]"
+            elif tmp < 0.8:
+                itemset[1][itemset2] = "[0.75 - 0.8]"
+            elif tmp < 0.85:
+                itemset[1][itemset2] = "[0.8 - 0.85]"
+            elif tmp < 0.90:
+                itemset[1][itemset2] = "[0.85 - 0.9]"
+            else:
+                itemset[1][itemset2] = "[0.9 - 1]"
+    return itemsets, []
     # return itemsets
 
 
