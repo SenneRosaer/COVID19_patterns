@@ -379,8 +379,8 @@ def frequent_itemsets_apriori(df, cache_results=True):
     else:
         transactions = uncache('cache.txt')
         final_list = uncache('final_list_cache.txt')
-    #make_tree(final_list)
-    write_apriori_results(transactions)
+    make_tree(final_list)
+    # write_apriori_results(transactions)
 
 
 def frequent_itemsets_apriori_by_month(df, cache_results=True):
@@ -444,4 +444,4 @@ def frequent_itemsets_apriori_by_month(df, cache_results=True):
 if __name__ == '__main__':
     df = create_dataframe()
     print(df)
-    frequent_itemsets_apriori_by_month(df)
+    frequent_itemsets_apriori(df)
