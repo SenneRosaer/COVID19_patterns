@@ -8,7 +8,7 @@ import pickle
 from sklearn.tree import export_graphviz, DecisionTreeRegressor
 from sklearn.feature_extraction.text import CountVectorizer
 import graphviz
-
+import copy
 
 def create_dataframe():
     """
@@ -229,10 +229,10 @@ def write_apriori_results(results, file_name='test'):
         for rule in apr[1]:
             boolean = False
             for i in rule.rhs:
-                if i.find("-"):
+                if '[' in i:
                     boolean = True
             for i in rule.lhs:
-                if i.find("-"):
+                if '[' in i:
                     boolean = True
             if boolean:
                 fp.write(str(rule) + "\n")
@@ -274,28 +274,10 @@ def create_final_list(mortality, transactions, date_dna_list, useTrans=False):
                 if b[0] != 0:
                     m = a[0] / b[0]
                 m = m * 100
-                if m < 0.5:
-                    m = "0-0.5"
-                elif m < 1:
-                    m = "0.5-1"
-                elif m < 1.5:
-                    m = "1-1.5"
-                elif m < 2:
-                    m = "1.5-2"
-                elif m < 2.5:
-                    m = "2-2.5"
-                elif m < 3:
-                    m = "2.5-3"
-                elif m < 3.5:
-                    m = "3-3.5"
-                elif m < 4:
-                    m = "3.5-4"
-                elif m < 4.5:
-                    m = "4-4.5"
-                elif m < 5:
-                    m = "4.5-5"
+                if m < 3:
+                    m = "[0 - 3]"
                 else:
-                    m = "5-..."
+                    m = "[3 - ..]"
                 transactions[index].append(m)
             else:
                 m = 0
@@ -397,8 +379,8 @@ def frequent_itemsets_apriori(df, cache_results=True):
     else:
         transactions = uncache('cache.txt')
         final_list = uncache('final_list_cache.txt')
-    make_tree(final_list)
-    # write_apriori_results(transactions)
+    #make_tree(final_list)
+    write_apriori_results(transactions)
 
 
 def frequent_itemsets_apriori_by_month(df, cache_results=True):
@@ -422,20 +404,34 @@ def frequent_itemsets_apriori_by_month(df, cache_results=True):
             result_list.append(results)
 
     final = []
+    fin_dups = []
     for item in result_list:
         set1 = set()
+        item = item[0]
         for tmp in item:
             t = set(item[tmp].items())
             set1 = set1.union(t)
 
+        dups_tmp = set()
         for item2 in result_list:
+            item2 = item2[0]
             if item != item2:
                 set2 = set()
                 for tmp in item2:
                     t = set(item2[tmp].items())
                     set2 = set2.union(t)
+                duplicates = set1.intersection(set2)
                 set1 = set1 - set2
+                dups_tmp = dups_tmp.union(duplicates)
+        fin_dups.append(dups_tmp)
         final.append(set1)
+
+    with open("output/reee.txt", "w") as f:
+        for index, item in enumerate(fin_dups):
+            f.write("Dups in month " + str(index+1) + ": \n\n")
+            for item2 in item:
+                f.write(str(item2) + "\n")
+            f.write("\n\n\n\n\n")
 
     with open("output/testresult.txt", "w") as f:
         for index, set_ in enumerate(final):
@@ -448,4 +444,4 @@ def frequent_itemsets_apriori_by_month(df, cache_results=True):
 if __name__ == '__main__':
     df = create_dataframe()
     print(df)
-    frequent_itemsets_apriori(df)
+    frequent_itemsets_apriori_by_month(df)
