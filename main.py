@@ -21,9 +21,9 @@ def create_dataframe():
     pd.set_option('display.max_columns', 500)
     pd.set_option('display.width', 1000)
 
-    df = pd.read_csv("input/sequences_USA.csv")
+    df = pd.read_csv("input/sequences.csv")
 
-    file = open("input/USA_allignment")
+    file = open("input/allignment.aln")
     file = file.read().replace("\n", "")
     file = file.replace("gb|", "")
     file = file.split(">")
@@ -40,17 +40,6 @@ def create_dataframe():
     df2['Accession'] = df2['Accession'].astype(str)
 
     df = pd.merge(df, df2, how="right", on="Accession")
-    del df["Publications"]
-    del df["Authors"]
-    del df["Genotype"]
-    del df["Segment"]
-    del df["Species"]
-    del df["Genus"]
-    del df["Family"]
-    del df["BioSample"]
-    del df["GenBank_Title"]
-    del df["Isolation_Source"]
-    del df["Nuc_Completeness"]
     return df
 
 
@@ -61,7 +50,6 @@ def create_y():
     (columns: country, total deaths, amount of cases, date, percentage of population that is tested)
     """
     df = pd.read_csv("./input/owid-covid-data.csv")
-    df = df[df.location == "United States"]
     del df["new_tests_per_thousand"]
     del df["tests_units"]
     del df["iso_code"]
@@ -267,21 +255,24 @@ def create_final_list(mortality, transactions, date_dna_list, useTrans=False):
     """
     trans_tuples = []
     for index, item in enumerate(date_dna_list):
-        if str(item[1]) != "nan":
-            if len(str(item[1])) == 7:
-                d = datetime.datetime.strptime(item[1], "%Y-%m")
+        if str(item[2]) != "nan":
+            if len(str(item[2])) == 7:
+                d = datetime.datetime.strptime(item[2], "%Y-%m")
             else:
-                d = datetime.datetime.strptime(item[1], "%Y-%m-%d")
-            trans_tuples.append((item[2], d))
+                d = datetime.datetime.strptime(item[2], "%Y-%m-%d")
+            trans_tuples.append((item[3], d, item[1]))  # DNA, Date, Location
 
     final_list = []
     for index, t in enumerate(trans_tuples):
         y = mortality[mortality["date"] == (t[1] + datetime.timedelta(days=7))]
+        y = y[y["location"] == t[2]]
         a = list(y["total_deaths"])
         b = list(y["total_cases"])
         if len(a) and len(b):
             if useTrans:
-                m = a[0] / b[0]
+                m = 0
+                if b[0] != 0:
+                    m = a[0] / b[0]
                 m = m * 100
                 if m < 0.5:
                     m = "0-0.5"
@@ -307,7 +298,11 @@ def create_final_list(mortality, transactions, date_dna_list, useTrans=False):
                     m = "5-..."
                 transactions[index].append(m)
             else:
-                final_list.append((t[0], a[0] / b[0]))
+                m = 0
+                if b[0] != 0:
+                    m = a[0] / b[0]
+                m = m * 100
+                final_list.append((t[0], m))
 
     return final_list
 
@@ -319,13 +314,6 @@ def make_date_dna_list(df):
     :return: list of dates
     """
     print(df)
-
-    del df["Accession"]
-    del df["Length"]
-    del df["Sequence_Type"]
-    del df["Host"]
-    del df["Release_Date"]
-
     return list(df.itertuples(index=False))
 
 
@@ -371,7 +359,7 @@ def make_tree(list):
 
     print("is fitting")
     if not is_cached("tree"):
-        cls = DecisionTreeRegressor(min_samples_leaf=20)
+        cls = DecisionTreeRegressor(min_samples_leaf=2)
         cls.fit(X, Y)
         cache(cls, "tree")
     else:
@@ -398,7 +386,8 @@ def frequent_itemsets_apriori(df, cache_results=True):
     if not is_cached("cache.txt") and not is_cached("final_list_cache.txt"):
         mortality = create_y()
         date_dna_list = make_date_dna_list(df)
-        transactions = create_chunks(date_dna_list)
+        del df["Geo_Location"]
+        transactions = create_chunks(list(df.itertuples(index=False)))
         transactions = filter_transactions(transactions)
         create_final_list(mortality, transactions, date_dna_list, True)
         final_list = create_final_list(mortality, transactions, date_dna_list)
