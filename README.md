@@ -19,6 +19,8 @@ The two most important functions are the `frequent_itemsets_apriori` and the `fr
 The first one runs the apriori algorithm on the filtered data and also computes a regression tree which gives a clear representation of the data.
 The second function also performs apriori, but instead of running it on all the data is runs seperate for every month for better comparisons.
 
+The output of this program is generated in the output folder.
+
 ## Run this Code with Newer Data
 Input files will always be in the input directory.
 In order to run this code with other/newer data, the following functions need to be adapted.
