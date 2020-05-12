@@ -34,7 +34,7 @@ def create_dataframe():
 
     df = pd.read_csv("input/sequences.csv")
 
-    file = open("input/allignment.aln")
+    file = open("input/CHINA_alignment.aln")
     file = file.read().replace("\n", "")
     file = file.replace("gb|", "")
     file = file.split(">")
@@ -274,6 +274,10 @@ def create_final_list(mortality, transactions, date_dna_list, useTrans=False):
     final_list = []
     for index, t in enumerate(trans_tuples):
         y = mortality[mortality["date"] == (t[1] + datetime.timedelta(days=18))]
+        if t[2][0:3] == "USA":
+            t = (t[0], t[1], "United States")
+        if t[2][0:5] == "China":
+            t = (t[0], t[1], "China")
         y = y[y["location"] == t[2]]
         a = list(y["total_deaths"])
         b = list(y["total_cases"])
@@ -350,7 +354,7 @@ def make_tree(list):
         feature_names = uncache("ft_names")
 
     if not is_cached("tree"):
-        cls = DecisionTreeRegressor(min_samples_leaf=5)
+        cls = DecisionTreeRegressor(min_samples_leaf=8)
         cls.fit(X, Y)
         cache(cls, "tree")
     else:
@@ -358,8 +362,8 @@ def make_tree(list):
 
     # export to dot
     dot_data = export_graphviz(cls, out_file=None)
-    for val in range(0, len(feature_names) - 1):
-        dot_data = dot_data.replace("X[" + str(val) + "] <= 0.5", str(feature_names[val]).replace("[", ""))
+    for val in range(0, len(feature_names)):
+        dot_data = dot_data.replace("X[" + str(val) + "] <= 0.5", str(feature_names[val]).replace("[", "").replace("]", ""))
     dot_data = dot_data.replace("True", "Does not contain")
     dot_data = dot_data.replace("False", "Does contain")
     dot_data = dot_data.replace("\'", "")
