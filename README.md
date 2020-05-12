@@ -26,7 +26,7 @@ Input files will always be in the input directory.
 In order to run this code with other/newer data, the following functions need to be adapted.
 
 #### `create_dataframe()`
-The `create_dataframe()` function requires a `.csv` file that requires the following columns: `Accession`, `Geolocation` and `Collection_Date` (line 24). This data is taken from the NCBI database. Further, this function also needs an `.aln` alignment file which contains the aligned DNA sequences of the country/countries you want to investigate (line 26).
+The `create_dataframe()` function requires a `.csv` file that requires the following columns: `Accession`, `Geolocation` and `Collection_Date` (line 35). This data is taken from the NCBI database. Further, this function also needs an `.aln` alignment file which contains the aligned DNA sequences of the country/countries you want to investigate (line 37).
 
 #### `create_y()`
 This function uses the mortality data from `owid-covid-data.csv`. This data comes from the [Github Repository](https://github.com/owid/covid-19-data/tree/master/public/data) of 'Our World In Data'. This file contains all information about the counted COVID-19 cases. 
