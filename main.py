@@ -104,12 +104,8 @@ def create_chunks(date_dna_list, chunk_min=3, chunk_max=8):
         sequence_transactions = list()
         for n in range(chunk_min, chunk_max):
             chunks = []
-            ATG_pos = 0
             for i in range(0, len(item[2]), n):
-                if i < len(item[2])-2:
-                    if item[2][i:i+3] == "ATG":
-                        ATG_pos=i
-                chunks.append((item[2][i:(i + n)], str(i) + "-ATG@" + str(i - ATG_pos - item[2].count("-", ATG_pos, i))))
+                chunks.append((item[2][i:(i + n)], str(i)))
             sequence_transactions += chunks
         transactions.append(tuple(sequence_transactions))
     return transactions
@@ -128,12 +124,9 @@ def create_chunks2(date_dna_list, chunk_min=3, chunk_max=8):
         sequence_transactions = list()
         for n in range(chunk_min, chunk_max):
             chunks = []
-            ATG_pos = 0
             for i in range(0, len(item), n):
-                if i < len(item) - 2:
-                    if item[i:i + 3] == "ATG":
-                        ATG_pos = i
-                chunks.append((item[i:(i + n)], str(i) + "-ATG@" + str(i - ATG_pos - item.count("-", ATG_pos, i))))
+                if i >= 266 and i <= 29674:
+                    chunks.append((item[i:(i + n)], str(i)))
             sequence_transactions += chunks
         transactions.append(tuple(sequence_transactions))
     return transactions
@@ -264,7 +257,7 @@ def create_final_list(mortality, transactions, date_dna_list, useTrans=False):
 
     final_list = []
     for index, t in enumerate(trans_tuples):
-        y = mortality[mortality["date"] == (t[1] + datetime.timedelta(days=7))]
+        y = mortality[mortality["date"] == (t[1] + datetime.timedelta(days=18))]
         y = y[y["location"] == t[2]]
         a = list(y["total_deaths"])
         b = list(y["total_cases"])
@@ -341,7 +334,7 @@ def make_tree(list):
 
     print("is fitting")
     if not is_cached("tree"):
-        cls = DecisionTreeRegressor(min_samples_leaf=2)
+        cls = DecisionTreeRegressor(min_samples_leaf=5)
         cls.fit(X, Y)
         cache(cls, "tree")
     else:
@@ -350,12 +343,12 @@ def make_tree(list):
     # export to dot
     dot_data = export_graphviz(cls, out_file=None)
     for val in range(0, len(feature_names) - 1):
-        dot_data = dot_data.replace("X[" + str(val) + "] <= 0.5", str(feature_names[val]))
+        dot_data = dot_data.replace("X[" + str(val) + "] <= 0.5", str(feature_names[val]).replace("[",""))
     dot_data = dot_data.replace("True", "Does not contain")
     dot_data = dot_data.replace("False", "Does contain")
     dot_data = dot_data.replace("\'", "")
     graph = graphviz.Source(dot_data)
-    graph.render("tree")
+    graph.render("output/tree")
 
 
 def frequent_itemsets_apriori(df, cache_results=True):
