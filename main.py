@@ -1,6 +1,4 @@
-import numpy as np
 import pandas as pd
-from efficient_apriori import apriori
 from own_apriori import apriori2
 import os
 import datetime
@@ -8,8 +6,21 @@ import pickle
 from sklearn.tree import export_graphviz, DecisionTreeRegressor
 from sklearn.feature_extraction.text import CountVectorizer
 import graphviz
-import copy
 
+
+def log_function(tab_count = 0):
+    def inner_function(func):
+        def wrapper(*args, **kwargs):
+            tabs = '\t' * tab_count
+            print(tabs, "---- Running function " + func.__name__)
+            result = func(*args, **kwargs)
+            print(tabs, "---- Finished " + func.__name__)
+            return result
+        return wrapper
+    return inner_function
+
+
+@log_function(0)
 def create_dataframe():
     """
     Creates dataframe from sequences.csv which contains data about location and time and MT.. file which contains
@@ -43,6 +54,7 @@ def create_dataframe():
     return df
 
 
+@log_function(1)
 def create_y():
     """
     This function is used to create a dataframe containing the mortality data
@@ -61,7 +73,6 @@ def create_y():
     del df["total_cases_per_million"]
     del df["new_deaths"]
     del df["new_cases"]
-    print(df)
 
     df['date'] = df['date'].apply(lambda x: datetime.datetime.strptime(x, "%Y-%m-%d"))
 
@@ -91,6 +102,7 @@ def checkSame(first, second):
     return True
 
 
+@log_function(2)
 def create_chunks(date_dna_list, chunk_min=3, chunk_max=8):
     """
     Splits a list of strings of DNA in chunks of certain lenghts
@@ -111,6 +123,7 @@ def create_chunks(date_dna_list, chunk_min=3, chunk_max=8):
     return transactions
 
 
+@log_function(2)
 def create_chunks2(date_dna_list, chunk_min=3, chunk_max=8):
     """
     Splits a list of strings of DNA in chunks of certain lenghts
@@ -132,6 +145,7 @@ def create_chunks2(date_dna_list, chunk_min=3, chunk_max=8):
     return transactions
 
 
+@log_function(1)
 def filter_transactions(transactions):
     """
     Filters the transactions since they contain way to much data
@@ -200,6 +214,7 @@ def is_cached(file_name):
     return os.path.isfile("cache/" + file_name)
 
 
+@log_function(1)
 def write_apriori_results(results, file_name='test'):
     """
     Write the results of executing apriori to a file for easier usage
@@ -233,6 +248,7 @@ def write_apriori_results(results, file_name='test'):
     return apr
 
 
+@log_function(1)
 def create_final_list(mortality, transactions, date_dna_list, useTrans=False):
     """
     This function combines mortality with the transactions.
@@ -288,16 +304,17 @@ def make_date_dna_list(df):
     :param df: Dataframe to create list from
     :return: list of dates
     """
-    print(df)
     return list(df.itertuples(index=False))
 
 
 class Tokenizer(object):
     """Custom tokenizer used to create tokens"""
+
     def __call__(self, doc):
         return set(doc.split(","))
 
 
+@log_function(1)
 def make_tree(list):
     """
     Creates a tree using DNA data in a list
@@ -332,7 +349,6 @@ def make_tree(list):
         X = uncache("vect_X")
         feature_names = uncache("ft_names")
 
-    print("is fitting")
     if not is_cached("tree"):
         cls = DecisionTreeRegressor(min_samples_leaf=5)
         cls.fit(X, Y)
@@ -343,7 +359,7 @@ def make_tree(list):
     # export to dot
     dot_data = export_graphviz(cls, out_file=None)
     for val in range(0, len(feature_names) - 1):
-        dot_data = dot_data.replace("X[" + str(val) + "] <= 0.5", str(feature_names[val]).replace("[",""))
+        dot_data = dot_data.replace("X[" + str(val) + "] <= 0.5", str(feature_names[val]).replace("[", ""))
     dot_data = dot_data.replace("True", "Does not contain")
     dot_data = dot_data.replace("False", "Does contain")
     dot_data = dot_data.replace("\'", "")
@@ -351,6 +367,7 @@ def make_tree(list):
     graph.render("output/tree")
 
 
+@log_function()
 def frequent_itemsets_apriori(df, cache_results=True):
     """
     Runs all the apriori algorithm edited to only compute frequent sets
@@ -376,6 +393,7 @@ def frequent_itemsets_apriori(df, cache_results=True):
     # write_apriori_results(transactions)
 
 
+@log_function
 def frequent_itemsets_apriori_by_month(df, cache_results=True):
     """
     Get the frequent itemsets by month
@@ -421,7 +439,7 @@ def frequent_itemsets_apriori_by_month(df, cache_results=True):
 
     with open("output/reee.txt", "w") as f:
         for index, item in enumerate(fin_dups):
-            f.write("Dups in month " + str(index+1) + ": \n\n")
+            f.write("Dups in month " + str(index + 1) + ": \n\n")
             for item2 in item:
                 f.write(str(item2) + "\n")
             f.write("\n\n\n\n\n")
@@ -436,5 +454,4 @@ def frequent_itemsets_apriori_by_month(df, cache_results=True):
 
 if __name__ == '__main__':
     df = create_dataframe()
-    print(df)
     frequent_itemsets_apriori(df)
