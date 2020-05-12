@@ -125,7 +125,8 @@ def create_chunks2(date_dna_list, chunk_min=3, chunk_max=8):
         for n in range(chunk_min, chunk_max):
             chunks = []
             for i in range(0, len(item), n):
-                chunks.append((item[i:(i + n)], str(i)))
+                if i >= 266 and i <= 29674:
+                    chunks.append((item[i:(i + n)], str(i)))
             sequence_transactions += chunks
         transactions.append(tuple(sequence_transactions))
     return transactions
@@ -342,12 +343,12 @@ def make_tree(list):
     # export to dot
     dot_data = export_graphviz(cls, out_file=None)
     for val in range(0, len(feature_names) - 1):
-        dot_data = dot_data.replace("X[" + str(val) + "] <= 0.5", str(feature_names[val]))
+        dot_data = dot_data.replace("X[" + str(val) + "] <= 0.5", str(feature_names[val]).replace("[",""))
     dot_data = dot_data.replace("True", "Does not contain")
     dot_data = dot_data.replace("False", "Does contain")
     dot_data = dot_data.replace("\'", "")
     graph = graphviz.Source(dot_data)
-    graph.render("tree")
+    graph.render("output/tree")
 
 
 def frequent_itemsets_apriori(df, cache_results=True):
